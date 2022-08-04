@@ -28,5 +28,4 @@ public class Section {
     @JoinColumn(name = "manager_id")
     @JsonIgnoreProperties("sections")
     private Manager manager;
-
 }
