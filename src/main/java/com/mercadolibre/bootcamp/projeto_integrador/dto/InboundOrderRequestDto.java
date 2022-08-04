@@ -9,8 +9,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class InboundOrderRequestDto {
-    private int orderNumber;
+    private long orderNumber;
     private LocalDate orderDate;
     private long sectionCode;
-    private List<Batch> batchStock;
+    private List<BatchDto> batchStock;
 }
