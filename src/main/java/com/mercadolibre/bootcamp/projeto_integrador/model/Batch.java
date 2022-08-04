@@ -34,5 +34,8 @@ public class Batch {
 
     private LocalDate dueDate;
 
-    private long orderNumber;
+    @ManyToOne
+    @JoinColumn(name = "order_number")
+    @JsonIgnoreProperties("batches")
+    private InboundOrder inboundOrder;
 }
