@@ -1,11 +1,12 @@
 package com.mercadolibre.bootcamp.projeto_integrador.dto;
 
+import lombok.Data;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class BatchDto {
-    private long batchNumber;
-
+@Data
+public class BatchRequestDto {
     private long productId;
 
     private float currentTemperature;

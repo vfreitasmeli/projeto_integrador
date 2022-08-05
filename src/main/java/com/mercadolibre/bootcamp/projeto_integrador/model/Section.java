@@ -1,12 +1,13 @@
 package com.mercadolibre.bootcamp.projeto_integrador.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Section {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,18 +15,23 @@ public class Section {
 
     @ManyToOne
     @JoinColumn(name = "warehouse_code")
-    @JsonIgnoreProperties("sections")
     private Warehouse warehouse;
 
+    @Column(columnDefinition = Category.mysqlDefinition)
     @Enumerated(EnumType.STRING)
-    private SectionCategory category;
-
-    public enum SectionCategory {FRESH, CHILLED, FROZEN;}
+    private Category category;
 
     private int maxBatches;
 
     @ManyToOne
     @JoinColumn(name = "manager_id")
-    @JsonIgnoreProperties("sections")
     private Manager manager;
+
+    public enum Category {
+        FRESH,
+        CHILLED,
+        FROZEN;
+
+        private static final String mysqlDefinition = "enum('FRESH', 'CHILLED', 'FROZEN')";
+    }
 }

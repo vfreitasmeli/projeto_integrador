@@ -1,13 +1,14 @@
 package com.mercadolibre.bootcamp.projeto_integrador.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class InboundOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,10 +17,6 @@ public class InboundOrder {
     @ManyToOne
     @JoinColumn(name = "sectionCode")
     private Section section;
-
-    @OneToMany
-    @JoinColumn(name = "batch_number")
-    private List<Batch> batchStock;
 
     private LocalDate orderDate;
 }

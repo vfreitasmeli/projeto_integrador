@@ -1,7 +1,8 @@
 package com.mercadolibre.bootcamp.projeto_integrador.dto;
 
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
