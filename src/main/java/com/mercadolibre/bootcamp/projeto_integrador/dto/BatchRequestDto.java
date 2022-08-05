@@ -24,17 +24,17 @@ public class BatchRequestDto {
     @NotNull(message = "A quantidade inicial deve ser informada")
     private int initialQuantity;
 
-    @JsonFormat(pattern="dd-MM-yyyy")
+    @JsonFormat(pattern = "dd-MM-yyyy")
     @NotNull(message = "A data de fabricação deve ser informada")
     @PastOrPresent(message = "A date de fabricação deve ser menor ou igual a data atual")
     private LocalDate manufacturingDate;
 
-    @JsonFormat(pattern="dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     @NotNull(message = "A hora de fabricação deve ser informada")
     @PastOrPresent(message = "A hora de fabricação deve ser menor ou igual a data atual")
     private LocalDateTime manufacturingTime;
 
-    @JsonFormat(pattern="dd-MM-yyyy")
+    @JsonFormat(pattern = "dd-MM-yyyy")
     @NotNull(message = "A data de vencimento deve ser informada")
     @Future(message = "A data de vencimento deve ser posterior a data atual")
     private LocalDate dueDate;
