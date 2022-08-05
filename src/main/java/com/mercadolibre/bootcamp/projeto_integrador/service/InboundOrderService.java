@@ -3,6 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
 import com.mercadolibre.bootcamp.projeto_integrador.model.InboundOrder;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
@@ -43,7 +44,7 @@ public class InboundOrderService implements IInboundOrderService {
     public InboundOrderResponseDto create(InboundOrderRequestDto request) {
         Optional<Section> section = sectionRepository.findById(request.getSectionCode());
         if (section.isEmpty())
-            throw new RuntimeException("Section not found");
+            throw new NotFoundException("Section");
 
         Map<Long, Product> products = productRepository
                 .findAllById(request.getBatchStock().stream().map(BatchRequestDto::getProductId).collect(Collectors.toList()))
@@ -78,7 +79,7 @@ public class InboundOrderService implements IInboundOrderService {
         });
         Batch batch = modelMapper.map(dto, Batch.class);
         if (batch.getProduct() == null)
-            throw new RuntimeException("Product not found");
+            throw new NotFoundException("Product");
         return batch;
     }
 }
