@@ -12,6 +12,7 @@ import com.mercadolibre.bootcamp.projeto_integrador.repository.IManagerRepositor
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.ISectionRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IWarehouseRepository;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorInboundOrderAndBatch;
 import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorProducts;
 import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorSection;
 import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorWarehouseAndManager;
@@ -60,10 +61,22 @@ public class InboundOrderControllerTest {
     private DataSource dataSource;
 
     private final ObjectMapper objectMapper;
+    private Warehouse warehouse = GeneratorWarehouseAndManager.newWarehouse();
+    private Manager manager = GeneratorWarehouseAndManager.newManager();
+    private Section section = GeneratorSection.getSection(warehouse, manager);
+    private Product product = GeneratorProducts.newProductFresh();
 
     public InboundOrderControllerTest() {
         objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
+    }
+
+    @BeforeAll
+    void populateTheDatabase() {
+        warehouseRepository.save(warehouse);
+        managerRepository.save(manager);
+        sectionRepository.save(section);
+        productRepository.save(product);
     }
 
     @BeforeEach
@@ -87,28 +100,8 @@ public class InboundOrderControllerTest {
 
     @Test
     void createInboundOrder_returnsOk_whenIsGivenAValidInput() throws Exception {
-        Warehouse warehouse = GeneratorWarehouseAndManager.newWarehouse();
-        Manager manager = GeneratorWarehouseAndManager.newManager();
-        Section section = GeneratorSection.getSection(warehouse, manager);
-        Product product = GeneratorProducts.newProductFresh();
-
-        warehouseRepository.save(warehouse);
-        managerRepository.save(manager);
-        sectionRepository.save(section);
-        productRepository.save(product);
-
-        BatchRequestDto batchRequest = new BatchRequestDto();
-        batchRequest.setProductId(product.getProductId());
-        batchRequest.setProductPrice(new BigDecimal("100.99"));
-        batchRequest.setCurrentTemperature(10.0f);
-        batchRequest.setMinimumTemperature(10.0f);
-        batchRequest.setDueDate(LocalDate.now().plusWeeks(1));
-        batchRequest.setManufacturingTime(LocalDateTime.now());
-        batchRequest.setManufacturingDate(LocalDate.now());
-        batchRequest.setInitialQuantity(10);
-
-        InboundOrderRequestDto requestDto = new InboundOrderRequestDto();
-        requestDto.setBatchStock(List.of(batchRequest));
+        InboundOrderRequestDto requestDto = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
+        requestDto.getBatchStock().get(0).setProductId(product.getProductId());
         requestDto.setSectionCode(section.getSectionCode());
 
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
@@ -119,16 +112,6 @@ public class InboundOrderControllerTest {
 
     @Test
     void createInboundOrder_returnsError_whenIsGivenAnInvalidInput() throws Exception {
-        Warehouse warehouse = GeneratorWarehouseAndManager.newWarehouse();
-        Manager manager = GeneratorWarehouseAndManager.newManager();
-        Section section = GeneratorSection.getSection(warehouse, manager);
-        Product product = GeneratorProducts.newProductFresh();
-
-        warehouseRepository.save(warehouse);
-        managerRepository.save(manager);
-        sectionRepository.save(section);
-        productRepository.save(product);
-
         System.out.println(manager.getManagerId());
 
         BatchRequestDto batchRequest = new BatchRequestDto();
