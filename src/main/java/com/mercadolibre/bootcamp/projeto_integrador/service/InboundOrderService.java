@@ -82,14 +82,20 @@ public class InboundOrderService implements IInboundOrderService {
     public InboundOrderResponseDto update(long orderNumber, InboundOrderRequestDto request, long managerId) {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
                 .orElseThrow(() -> new NotFoundException("Inbound Order"));
+        Section section = order.getSection();
+        Map<Long, Product> products = getProductMap(request.getBatchStock());
 
-        List<Batch> batches = buildBatches(request.getBatchStock(), getProductMap(request.getBatchStock()));
+        List<Batch> batches = buildBatches(request.getBatchStock(), products);
 
         batches.forEach(b -> b = batchService.update(order, b));
 
-        sectionRepository.save(ensureSectionHasSpace(order.getSection(), (int) request.getBatchStock().stream()
+        ensureManagerHasPermissionInSection(managerId, section);
+        ensureSectionHasCompatibleCategory(section, products);
+        ensureSectionHasSpace(section, (int) request.getBatchStock().stream()
                 .filter(b -> b.getBatchNumber() == 0)
-                .count()));
+                .count());
+
+        sectionRepository.save(section);
 
         return new InboundOrderResponseDto() {{ setBatchStock(batches); }};
     }
