@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-// TODO: Utilizar exceções customizadas
 @Service
 public class InboundOrderService implements IInboundOrderService {
 
@@ -80,7 +79,7 @@ public class InboundOrderService implements IInboundOrderService {
     @Transactional
     public InboundOrderResponseDto update(long orderNumber, InboundOrderRequestDto request) {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
-                .orElseThrow(() -> new NotFoundException("Inbound"));
+                .orElseThrow(() -> new NotFoundException("Inbound Order"));
 
         List<Batch> batches = buildBatches(request.getBatchStock());
 
