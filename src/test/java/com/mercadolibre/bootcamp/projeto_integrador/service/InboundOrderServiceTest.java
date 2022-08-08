@@ -56,7 +56,7 @@ class InboundOrderServiceTest {
         );
 
         // Assert
-        assertThat(exception.getMessage()).isEqualTo("Section not found");
+        assertThat(exception.getMessage()).isEqualTo("There is no section with the specified id");
     }
 
     @Test
@@ -93,7 +93,7 @@ class InboundOrderServiceTest {
         );
 
         // Assert
-        assertThat(exception.getMessage()).isEqualTo("Product not found");
+        assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
     }
 
     @Test
