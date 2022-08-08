@@ -2,9 +2,13 @@ package com.mercadolibre.bootcamp.projeto_integrador.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class CustomExceptionHandler {
@@ -36,5 +40,19 @@ public class CustomExceptionHandler {
     @ExceptionHandler(InitialQuantityException.class)
     public ResponseEntity<CustomError> batchInitialQuantityExceptionHandler(InitialQuantityException exception) {
         return ResponseEntity.status(exception.getStatus()).body(new CustomError(exception));
+    }
+
+    // Exceptions for @Valid annotation
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<CustomError> handle(MethodArgumentNotValidException exception) {
+        // Create list with all errors on exception
+        List<FieldError> errors = exception.getBindingResult().getFieldErrors();
+
+        // New CustomError instance, transforming each FieldError to String
+        CustomError error = new CustomError("Invalid fields", errors.stream()
+                .map(FieldError::getDefaultMessage)
+                .distinct()
+                .collect(Collectors.joining(" | ")), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }
