@@ -44,6 +44,11 @@ public class InboundOrderService implements IInboundOrderService {
     @Autowired
     private IBatchRepository batchRepository;
 
+    /**
+     * Método que faz a criação da InboundOrder com novos lotes
+     * @param request InboundOrderRequestDto
+     * @return InboundOrderResponseDto contendo os dados dos lotes inseridos
+     */
     @Override
     @Transactional
     public InboundOrderResponseDto create(InboundOrderRequestDto request) {
@@ -53,7 +58,6 @@ public class InboundOrderService implements IInboundOrderService {
             throw new NotFoundException("Section");
 
         Section section = foundSection.get();
-
         section = sectionHasSpace(section, request.getBatchStock().size());
 
         List<Batch> batches = buildBatches(request.getBatchStock());
