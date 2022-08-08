@@ -1,5 +1,6 @@
 package com.mercadolibre.bootcamp.projeto_integrador.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
