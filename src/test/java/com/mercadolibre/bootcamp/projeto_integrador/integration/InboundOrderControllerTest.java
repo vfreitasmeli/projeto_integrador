@@ -90,6 +90,7 @@ public class InboundOrderControllerTest {
 
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
     }
@@ -126,6 +127,7 @@ public class InboundOrderControllerTest {
 
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is4xxClientError());
     }
@@ -175,8 +177,9 @@ public class InboundOrderControllerTest {
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                 .param("orderNumber", ""+ib.getOrderNumber())
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
 
         batch = batchRepository.findById(batch.getBatchNumber()).get();
         assertThat(batch.getCurrentTemperature()).isEqualTo(newTemperature);
@@ -211,8 +214,9 @@ public class InboundOrderControllerTest {
         MvcResult response = mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                 .param("orderNumber", ""+ib.getOrderNumber())
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn();
 
         String json = response.getResponse().getContentAsString();
@@ -252,9 +256,10 @@ public class InboundOrderControllerTest {
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                 .param("orderNumber", ""+ib.getOrderNumber()+1)
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.name").value("Inbound not found."));
+                .andExpect(jsonPath("$.name").value("Inbound Order not found."));
     }
 
     @Test
@@ -298,6 +303,7 @@ public class InboundOrderControllerTest {
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                 .param("orderNumber", ""+ib.getOrderNumber())
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.name").value("Section"))
@@ -349,6 +355,7 @@ public class InboundOrderControllerTest {
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                 .param("orderNumber", ""+ib.getOrderNumber())
                 .content(asJsonString(requestDto))
+                .header("Manager-Id", manager.getManagerId())
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.name").value("Invalid batch quantity"))
