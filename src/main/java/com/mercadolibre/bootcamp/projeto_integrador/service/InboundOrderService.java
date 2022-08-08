@@ -58,7 +58,6 @@ public class InboundOrderService implements IInboundOrderService {
             throw new NotFoundException("Section");
 
         Section section = foundSection.get();
-
         section = sectionHasSpace(section, request.getBatchStock().size());
 
         List<Batch> batches = buildBatches(request.getBatchStock());
@@ -81,31 +80,19 @@ public class InboundOrderService implements IInboundOrderService {
      * @return InboundOrderResponseDto contendo as infos dos lotes atualizados/inseridos
      */
     @Override
+    @Transactional
     public InboundOrderResponseDto update(long orderNumber, InboundOrderRequestDto request) {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
-                .orElseThrow(() -> new NotFoundException("Inbound"));
+                .orElseThrow(() -> new NotFoundException("Inbound Order"));
 
         List<Batch> batches = buildBatches(request.getBatchStock());
 
-        List<Batch> batchesInsert = new ArrayList<>();
-
-        batches.stream().forEach(b -> {
-            try {
-                b = batchService.update(b);
-            }catch (Exception e){
-                batchesInsert.add(b);
-                //Novo registro. Não é pra atualizar
-            }
-        });
+        batches.forEach(b -> b = batchService.update(order, b));
 
         sectionRepository.save(sectionHasSpace(order.getSection(), request.getBatchStock().stream()
                 .filter(b -> b.getBatchNumber() == 0)
                 .collect(Collectors.toList())
                 .size()));
-        batchRepository.saveAll(batchesInsert.stream().peek(batch -> {
-            batch.setInboundOrder(order);
-            batch.setCurrentQuantity(batch.getInitialQuantity());
-        }).collect(Collectors.toList()));
 
         return new InboundOrderResponseDto() {{ setBatchStock(batches); }};
     }
