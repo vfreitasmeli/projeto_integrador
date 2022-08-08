@@ -385,7 +385,7 @@ public class InboundOrderControllerTest {
         Product product = new Product();
         product.setProductName("Apple");
         product.setBrand("Nature");
-        product.setCategory("Fruit");
+        product.setCategory(Section.Category.FRESH);
         return product;
     }
 

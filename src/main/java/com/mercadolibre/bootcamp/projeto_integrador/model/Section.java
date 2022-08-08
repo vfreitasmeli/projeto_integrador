@@ -40,6 +40,6 @@ public class Section {
         CHILLED,
         FROZEN;
 
-        private static final String mysqlDefinition = "enum('FRESH', 'CHILLED', 'FROZEN')";
+        public static final String mysqlDefinition = "enum('FRESH', 'CHILLED', 'FROZEN')";
     }
 }
