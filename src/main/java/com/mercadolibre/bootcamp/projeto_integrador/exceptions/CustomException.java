@@ -14,4 +14,5 @@ public class CustomException extends RuntimeException {
     private String message;
     private HttpStatus status;
     private LocalDateTime timestamp;
+
 }
