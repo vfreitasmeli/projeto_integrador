@@ -12,6 +12,10 @@ import com.mercadolibre.bootcamp.projeto_integrador.repository.IManagerRepositor
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.ISectionRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IWarehouseRepository;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorProducts;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorSection;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorWarehouseAndManager;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,10 +87,10 @@ public class InboundOrderControllerTest {
 
     @Test
     void createInboundOrder_returnsOk_whenIsGivenAValidInput() throws Exception {
-        Warehouse warehouse = getWarehouse();
-        Manager manager = getManager();
-        Section section = getSection(warehouse, manager);
-        Product product = getProduct();
+        Warehouse warehouse = GeneratorWarehouseAndManager.newWarehouse();
+        Manager manager = GeneratorWarehouseAndManager.newManager();
+        Section section = GeneratorSection.getSection(warehouse, manager);
+        Product product = GeneratorProducts.newProductFresh();
 
         warehouseRepository.save(warehouse);
         managerRepository.save(manager);
@@ -115,10 +119,10 @@ public class InboundOrderControllerTest {
 
     @Test
     void createInboundOrder_returnsError_whenIsGivenAnInvalidInput() throws Exception {
-        Warehouse warehouse = getWarehouse();
-        Manager manager = getManager();
-        Section section = getSection(warehouse, manager);
-        Product product = getProduct();
+        Warehouse warehouse = GeneratorWarehouseAndManager.newWarehouse();
+        Manager manager = GeneratorWarehouseAndManager.newManager();
+        Section section = GeneratorSection.getSection(warehouse, manager);
+        Product product = GeneratorProducts.newProductFresh();
 
         warehouseRepository.save(warehouse);
         managerRepository.save(manager);
@@ -147,38 +151,6 @@ public class InboundOrderControllerTest {
                 .content(asJsonString(requestDto))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is4xxClientError());
-    }
-
-    private Warehouse getWarehouse() {
-        Warehouse warehouse = new Warehouse();
-        warehouse.setLocation("New York");
-        return warehouse;
-    }
-
-    private Product getProduct() {
-        Product product = new Product();
-        product.setProductName("Apple");
-        product.setBrand("Nature");
-        product.setCategory("Fruit");
-        return product;
-    }
-
-    private Section getSection(Warehouse warehouse, Manager manager) {
-        Section section = new Section();
-        section.setCurrentBatches(1);
-        section.setCategory(Section.Category.FRESH);
-        section.setWarehouse(warehouse);
-        section.setManager(manager);
-        section.setMaxBatches(10);
-        return section;
-    }
-
-    private Manager getManager() {
-        Manager manager = new Manager();
-        manager.setName("John Doe");
-        manager.setUsername("john");
-        manager.setEmail("john@example.com");
-        return manager;
     }
 
     private String asJsonString(final Object obj) throws JsonProcessingException {

@@ -10,7 +10,9 @@ import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IInboundOrderRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.ISectionRepository;
-import com.mercadolibre.bootcamp.projeto_integrador.util.Generate;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorInboundOrderAndBatch;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorProducts;
+import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorSection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -44,7 +46,7 @@ class InboundOrderServiceTest {
     @Test
     void create_returnException_whenSectionNoExist() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
                 .thenReturn(Optional.empty());
 
@@ -62,9 +64,9 @@ class InboundOrderServiceTest {
     @Test
     void create_returnException_whenSectionHasNoSpace() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newCrowdedSection()));
+                .thenReturn(Optional.of(GeneratorSection.newCrowdedSection()));
 
         // Act
         RuntimeException exception = assertThrows(
@@ -80,12 +82,12 @@ class InboundOrderServiceTest {
     @Test
     void create_returnException_whenProductNoExist() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         inboundOrderRequest.getBatchStock().get(0).setProductId(99);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(GeneratorSection.getSectionWith1SlotAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
-                .thenReturn(Generate.listProducts());
+                .thenReturn(GeneratorProducts.getListProducts());
 
         // Act
         RuntimeException exception = assertThrows(
@@ -101,9 +103,9 @@ class InboundOrderServiceTest {
     @Test
     void create_returnException_whenManagerInvalid() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(GeneratorSection.getSectionWith1SlotAvailable()));
 
         // Act
         RuntimeException exception = assertThrows(
@@ -119,9 +121,9 @@ class InboundOrderServiceTest {
     @Test
     void create_returnException_whenProductCategoryNotCompatibleWithSection() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(GeneratorSection.getSectionWith1SlotAvailable()));
 
         // Act
         RuntimeException exception = assertThrows(
@@ -137,11 +139,11 @@ class InboundOrderServiceTest {
     @Test
     void create_returnBatch_whenSectionHasExactSpaceAvailable() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(GeneratorSection.getSectionWith1SlotAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
-                .thenReturn(Generate.listProducts());
+                .thenReturn(GeneratorProducts.getListProducts());
         when(sectionRepository.save(ArgumentMatchers.any(Section.class)))
                 .thenReturn(null);
         when(inboundOrderRepository.save(ArgumentMatchers.any(InboundOrder.class)))
@@ -171,12 +173,12 @@ class InboundOrderServiceTest {
     @Test
     void create_returnBatches_whenSectionHasMoreSpaceAvailable() {
         // Arrange
-        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
-        inboundOrderRequest.setBatchStock(Generate.list2BatchRequests());
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
+        inboundOrderRequest.setBatchStock(GeneratorInboundOrderAndBatch.newList2BatchRequestsDTO());
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(Generate.newSectionWith10SlotsAvailable()));
+                .thenReturn(Optional.of(GeneratorSection.getSectionWith10SlotsAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
-                .thenReturn(Generate.listProducts());
+                .thenReturn(GeneratorProducts.getListProducts());
         when(sectionRepository.save(ArgumentMatchers.any(Section.class)))
                 .thenReturn(null);
         when(inboundOrderRepository.save(ArgumentMatchers.any(InboundOrder.class)))
