@@ -10,12 +10,13 @@ import java.time.LocalDateTime;
 public class CustomExceptionHandler {
 
     /**
-     * Lança exceções não mapeadas, que serão verificadas posterioremente para possível customização de exception.
-     * @throws Exception
+     * Throw unmapped exceptions with HTTP Status 500, printing these exceptions to verify.
+     * @throw Exception
      * @param exception
      */
     @ExceptionHandler(Exception.class)
     public Object unmappedExceptionHandler(Exception exception) {
+        System.out.println(exception.toString());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new CustomError("Internal Server Error",
