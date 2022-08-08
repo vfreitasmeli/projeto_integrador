@@ -22,8 +22,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InboundOrderServiceTest {
@@ -57,6 +56,7 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no section with the specified id");
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
     }
 
     @Test
@@ -74,6 +74,7 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("Section does not have enough space");
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
     }
 
     @Test
@@ -94,6 +95,43 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    void create_returnException_whenManagerInvalid() {
+        // Arrange
+        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
+                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+
+        // Act
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> inboundService.create(inboundOrderRequest)
+        );
+
+        // Assert
+        assertThat(exception.getMessage()).isEqualTo("User without permission");
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    void create_returnException_whenProductCategoryNotCompatibleWithSection() {
+        // Arrange
+        InboundOrderRequestDto inboundOrderRequest = Generate.newInboundRequest();
+        when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
+                .thenReturn(Optional.of(Generate.newSectionWith1SlotAvailable()));
+
+        // Act
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> inboundService.create(inboundOrderRequest)
+        );
+
+        // Assert
+        assertThat(exception.getMessage()).isEqualTo("Product category not compatible with the section");
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
     }
 
     @Test
