@@ -3,22 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.util;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class GeneratorProducts {
-    public static List<Product> getListProducts() {
-        List<Product> products = new ArrayList<>();
-        products.add(newProductFresh());
-        products.add(newProductChilled());
-        products.add(newProductFrozen());
-
-        products.get(0).setProductId(1);
-        products.get(1).setProductId(2);
-        products.get(2).setProductId(3);
-        return products;
-    }
-
+public class ProductsGenerator {
     public static Product newProductFresh() {
         return Product.builder()
                 .productName("Maça")

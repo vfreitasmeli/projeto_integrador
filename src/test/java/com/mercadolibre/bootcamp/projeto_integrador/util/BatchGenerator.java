@@ -1,7 +1,6 @@
 package com.mercadolibre.bootcamp.projeto_integrador.util;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
-import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,15 +8,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GeneratorInboundOrderAndBatch {
-    public static InboundOrderRequestDto newInboundRequestDTO() {
-        return InboundOrderRequestDto.builder()
-                .sectionCode(1)
-                .batchStock(List.of(newBatchRequestDTO()))
-                .build();
-    }
-
-    private static BatchRequestDto newBatchRequestDTO() {
+public class BatchGenerator {
+    public static BatchRequestDto newBatchRequestDTO() {
         return BatchRequestDto.builder()
                 .productId(1)
                 .currentTemperature(15.0f)

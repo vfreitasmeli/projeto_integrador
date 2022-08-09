@@ -117,8 +117,6 @@ public class InboundOrderService implements IInboundOrderService {
      * @return Mapa de produtos com identificador como chave
      */
     private Map<Long, Product> getProductMap(List<BatchRequestDto> batchesDto) {
-        List<Product> aux = productRepository
-                .findAllById(batchesDto.stream().map(BatchRequestDto::getProductId).collect(Collectors.toList()));
         return productRepository
                 .findAllById(batchesDto.stream().map(BatchRequestDto::getProductId).collect(Collectors.toList()))
                 .stream()
