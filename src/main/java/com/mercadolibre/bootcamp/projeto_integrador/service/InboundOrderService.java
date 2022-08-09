@@ -156,17 +156,17 @@ public class InboundOrderService implements IInboundOrderService {
     }
 
     /**
-     * Metodo que verifica se uma seção tem slots disponiveis para um ou mais novos lotes, e já atualiza o número de slots utilizados.
-     * @param section objeto Section.
+     * Metodo que verifica se uma seção tem slots disponiveis para um ou mais novos lotes, e já atualiza o número de
+     * slots utilizados.
+     *
+     * @param section    objeto Section.
      * @param batchCount quantos novos lotes estão sendo alocados.
-     * @return Objeto Section com o número de slots utilizados atualizado.
      */
-    private Section ensureSectionHasSpace(Section section, int batchCount){
+    private void ensureSectionHasSpace(Section section, int batchCount){
         if (section.getAvailableSlots() < batchCount) {
             throw new MaxSizeException("Section");
         }
         section.setCurrentBatches(section.getCurrentBatches() + batchCount);
-        return section;
     }
 
     /**
