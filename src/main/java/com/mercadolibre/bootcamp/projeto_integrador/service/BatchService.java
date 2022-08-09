@@ -1,6 +1,8 @@
 package com.mercadolibre.bootcamp.projeto_integrador.service;
 
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.BadRequestException;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.InitialQuantityException;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
 import com.mercadolibre.bootcamp.projeto_integrador.model.InboundOrder;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
@@ -35,29 +37,45 @@ public class BatchService implements IBatchService {
         return batch;
     }
 
+    /**
+     * Método que busca a lista de Batches com estoque positovo e data de validade superior a 20 dias.
+     *
+     * @return List<Batch>
+     */
     @Override
     public List<Batch> findAll() {
-        LocalDate minimumExpirationDate = LocalDate.now().plusDays(21);
+        LocalDate minimumExpirationDate = LocalDate.now().plusDays(20);
         List<Batch> batches = batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfter(0, minimumExpirationDate)
-                .orElseThrow(() -> new RuntimeException("Nenhum produto encontrado"));
+                .orElseThrow(() -> new RuntimeException("Something went wrong"));
         if (batches.isEmpty()) {
-            // TODO BatchNotFound
-            throw new RuntimeException("Nenhum produto encontrado");
+            throw new NotFoundException("Products", "There are no products in stock");
         }
         return batches;
     }
 
+    /**
+     * Método que busca a lista de Batches com estoque positovo e data de validade superior a 20 dias, filtrado por categoria.
+     *
+     * @param categoryCode
+     * @return List<Batch>
+     */
     @Override
     public List<Batch> findBatchByCategory(String categoryCode) {
+        String category = getCategory(categoryCode);
         LocalDate minimumExpirationDate = LocalDate.now().plusDays(21);
-        List<Batch> batches = batchRepository.findByCategory(getCategory(categoryCode), minimumExpirationDate);
+        List<Batch> batches = batchRepository.findByCategory(category, minimumExpirationDate);
         if (batches.isEmpty()) {
-            // TODO BatchNotFound
-            throw new RuntimeException("Nenhum produto encontrado");
+            throw new NotFoundException("Products", "There are no products in stock in the requested category");
         }
         return batches;
     }
 
+    /**
+     * Método que retorna a categoria do produto dado o código da cateogria.
+     *
+     * @param categoryCode
+     * @return String category
+     */
     private String getCategory(String categoryCode) {
         categoryCode = categoryCode.toUpperCase();
         switch (categoryCode) {
@@ -68,7 +86,8 @@ public class BatchService implements IBatchService {
             case "FF":
                 return "FROZEN";
             default:
-                throw new RuntimeException("Categoria inválida");
+                throw new BadRequestException("Invalid category, try again with one of the options: " +
+                        "'FS', 'RF' or 'FF' for fresh, chilled or frozen products respectively.");
         }
     }
 }
