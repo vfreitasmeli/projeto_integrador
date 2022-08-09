@@ -20,13 +20,13 @@ public class GeneratorInboundOrderAndBatch {
     private static BatchRequestDto newBatchRequestDTO() {
         return BatchRequestDto.builder()
                 .productId(1)
-                .currentTemperature(-5.0f)
-                .minimumTemperature(-25.0f)
+                .currentTemperature(15.0f)
+                .minimumTemperature(5.0f)
                 .initialQuantity(15)
                 .manufacturingDate(LocalDate.now().minusDays(2))
                 .manufacturingTime(LocalDateTime.now().minusDays(2))
                 .dueDate(LocalDate.now().plusDays(30))
-                .productPrice(new BigDecimal("29.9"))
+                .productPrice(new BigDecimal("5.9"))
                 .build();
     }
 
@@ -34,8 +34,8 @@ public class GeneratorInboundOrderAndBatch {
         List<BatchRequestDto> batchRequests = new ArrayList<>();
         batchRequests.add(BatchRequestDto.builder()
                 .productId(2)
-                .currentTemperature(15)
-                .minimumTemperature(5)
+                .currentTemperature(-5.0f)
+                .minimumTemperature(-15.0f)
                 .initialQuantity(50)
                 .manufacturingDate(LocalDate.now().minusDays(2))
                 .manufacturingTime(LocalDateTime.now().minusDays(2))
@@ -45,8 +45,8 @@ public class GeneratorInboundOrderAndBatch {
         );
         batchRequests.add(BatchRequestDto.builder()
                 .productId(3)
-                .currentTemperature(15)
-                .minimumTemperature(5)
+                .currentTemperature(-5.0f)
+                .minimumTemperature(-15.0f)
                 .initialQuantity(20)
                 .manufacturingDate(LocalDate.now().minusDays(2))
                 .manufacturingTime(LocalDateTime.now().minusDays(2))

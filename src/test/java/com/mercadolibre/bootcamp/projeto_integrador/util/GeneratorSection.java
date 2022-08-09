@@ -21,6 +21,7 @@ public class GeneratorSection {
                 .category(Section.Category.FRESH)
                 .maxBatches(8)
                 .currentBatches(7)
+                .manager(GeneratorWarehouseAndManager.getManagerWithId())
                 .build();
     }
 
@@ -30,6 +31,7 @@ public class GeneratorSection {
                 .category(Section.Category.FRESH)
                 .maxBatches(10)
                 .currentBatches(0)
+                .manager(GeneratorWarehouseAndManager.getManagerWithId())
                 .build();
     }
 
@@ -39,6 +41,7 @@ public class GeneratorSection {
                 .category(Section.Category.FRESH)
                 .maxBatches(20)
                 .currentBatches(20)
+                .manager(GeneratorWarehouseAndManager.getManagerWithId())
                 .build();
     }
 }
