@@ -3,10 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
-import com.mercadolibre.bootcamp.projeto_integrador.model.InboundOrder;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
+import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
 import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorInboundOrderAndBatch;
 import com.mercadolibre.bootcamp.projeto_integrador.util.GeneratorProducts;
@@ -134,7 +131,27 @@ class InboundOrderServiceTest {
 
     @Test
     void create_returnException_whenManagerNotHavePermission() {
-        // TODO
+        // Arrange
+        InboundOrderRequestDto inboundOrderRequest = GeneratorInboundOrderAndBatch.newInboundRequestDTO();
+        when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
+                .thenReturn(Optional.of(GeneratorSection.getSection(GeneratorWarehouseAndManager.newWarehouse(),
+                        GeneratorWarehouseAndManager.newManager())));
+        Manager unauthorizedManager = GeneratorWarehouseAndManager.newManager();
+        unauthorizedManager.setManagerId(2);
+        unauthorizedManager.setName("Peter");
+        when(managerRepository.findById(ArgumentMatchers.anyLong()))
+                .thenReturn(Optional.of(unauthorizedManager));
+
+        // Act
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> inboundService.create(inboundOrderRequest, unauthorizedManager.getManagerId())
+        );
+
+        // Assert
+        assertThat(exception.getMessage()).contains("is not authorized to perform this action.");
+        assertThat(exception.getMessage()).contains(unauthorizedManager.getName());
+        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
     }
 
     @Test
