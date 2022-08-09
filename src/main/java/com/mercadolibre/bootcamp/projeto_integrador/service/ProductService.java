@@ -22,6 +22,11 @@ public class ProductService implements IProductService {
     @Autowired
     private IProductRepository productRepository;
 
+    /**
+     * Metodo que retorna todos armazens que contenham um determinado item com as quantidades totais.
+     * @param productId long representando o id do produto
+     * @return ProductResponseDto contendo o id do produto com uma lista de códigos de armazens com quantidades do produto.
+     */
     @Override
     public ProductResponseDto getWarehouses(long productId) {
         List<Batch> batchList = batchRepository.findAllByProduct(productRepository.findById(productId).orElseThrow(() -> new NotFoundException("Product")));
