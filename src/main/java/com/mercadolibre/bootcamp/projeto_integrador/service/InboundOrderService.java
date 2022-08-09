@@ -3,10 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.ManagerNotFoundException;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.MaxSizeException;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.UnauthorizedManagerException;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.*;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
 import org.modelmapper.Converter;
@@ -55,17 +52,13 @@ public class InboundOrderService implements IInboundOrderService {
             throw new NotFoundException("Section");
 
         Section section = foundSection.get();
+        Map<Long, Product> products = getProductMap(request.getBatchStock());
 
-        Optional<Manager> manager = managerRepository.findById(managerId);
-        if (manager.isEmpty())
-            throw new ManagerNotFoundException(managerId);
+        ensureManagerHasPermissionInSection(managerId, section);
+        ensureSectionHasCompatibleCategory(section, products);
+        ensureSectionHasSpace(section, request.getBatchStock().size());
 
-        if (section.getManager().getManagerId() != managerId)
-            throw new UnauthorizedManagerException(manager.get().getName());
-
-        sectionHasSpace(section, request.getBatchStock().size());
-
-        List<Batch> batches = buildBatches(request.getBatchStock());
+        List<Batch> batches = buildBatches(request.getBatchStock(), products);
 
         InboundOrder order = new InboundOrder();
         order.setSection(section);
@@ -89,14 +82,20 @@ public class InboundOrderService implements IInboundOrderService {
     public InboundOrderResponseDto update(long orderNumber, InboundOrderRequestDto request, long managerId) {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
                 .orElseThrow(() -> new NotFoundException("Inbound Order"));
+        Section section = order.getSection();
+        Map<Long, Product> products = getProductMap(request.getBatchStock());
 
-        List<Batch> batches = buildBatches(request.getBatchStock());
+        List<Batch> batches = buildBatches(request.getBatchStock(), products);
 
         batches.forEach(b -> b = batchService.update(order, b));
 
-        sectionRepository.save(sectionHasSpace(order.getSection(), (int) request.getBatchStock().stream()
+        ensureManagerHasPermissionInSection(managerId, section);
+        ensureSectionHasCompatibleCategory(section, products);
+        ensureSectionHasSpace(section, (int) request.getBatchStock().stream()
                 .filter(b -> b.getBatchNumber() == 0)
-                .count()));
+                .count());
+
+        sectionRepository.save(section);
 
         return new InboundOrderResponseDto() {{ setBatchStock(batches); }};
     }
@@ -106,30 +105,68 @@ public class InboundOrderService implements IInboundOrderService {
      * @param batchesDto lista de BatchRequestDto.
      * @return List<Batch> pronto.
      */
-    private List<Batch> buildBatches(List<BatchRequestDto> batchesDto){
-        Map<Long, Product> products = productRepository
-                .findAllById(batchesDto.stream().map(BatchRequestDto::getProductId).collect(Collectors.toList()))
-                .stream()
-                .collect(Collectors.toMap(Product::getProductId, product -> product));
-
+    private List<Batch> buildBatches(List<BatchRequestDto> batchesDto, Map<Long, Product> products){
         return batchesDto.stream()
                 .map(dto -> mapDtoToBatch(dto, products))
                 .collect(Collectors.toList());
-
     }
 
     /**
-     * Metodo que verifica se uma seção tem slots disponiveis para um ou mais novos lotes, e já atualiza o número de slots utilizados.
-     * @param section objeto Section.
-     * @param batchCount quantos novos lotes estão sendo alocados.
-     * @return Objeto Section com o número de slots utilizados atualizado.
+     * Retorna mapa de produtos por ID
+     * @param batchesDto Lotes enviados no pedido de entrada
+     * @return Mapa de produtos com identificador como chave
      */
-    private Section sectionHasSpace(Section section, int batchCount){
+    private Map<Long, Product> getProductMap(List<BatchRequestDto> batchesDto) {
+        return productRepository
+                .findAllById(batchesDto.stream().map(BatchRequestDto::getProductId).collect(Collectors.toList()))
+                .stream()
+                .collect(Collectors.toMap(Product::getProductId, product -> product));
+    }
+
+    /**
+     * Garante que a seção pode acomodar todos os produtos fornecidos.
+     * @param section Seção dos lotes
+     * @param products Produtos
+     */
+    private void ensureSectionHasCompatibleCategory(Section section, Map<Long, Product> products) {
+        List<Product> invalidProducts = products.values()
+                .stream()
+                .filter(product -> !product.getCategory().equals(section.getCategory()))
+                .collect(Collectors.toList());
+
+        List<String> productNames = invalidProducts.stream().map(Product::getProductName).collect(Collectors.toList());
+
+        if (invalidProducts.size() > 0)
+            throw new IncompatibleCategoryException(productNames);
+    }
+
+    /**
+     * Garante que o gerente tem permissão para lidar na seção fornecida.
+     * @param managerId ID do gerente
+     * @param section Seção dos lotes
+     */
+    private void ensureManagerHasPermissionInSection(long managerId, Section section) {
+        Optional<Manager> manager = managerRepository.findById(managerId);
+
+        if (manager.isEmpty())
+            throw new ManagerNotFoundException(managerId);
+
+        if (section.getManager().getManagerId() != managerId)
+            throw new UnauthorizedManagerException(manager.get().getName());
+    }
+
+    /**
+     * Metodo que verifica se uma seção tem slots disponiveis para um ou mais novos lotes, e já atualiza o número de
+     * slots utilizados.
+     *
+     * @param section    objeto Section.
+     * @param batchCount quantos novos lotes estão sendo alocados.
+     */
+    private void ensureSectionHasSpace(Section section, int batchCount){
         if (section.getAvailableSlots() < batchCount) {
             throw new MaxSizeException("Section");
         }
         section.setCurrentBatches(section.getCurrentBatches() + batchCount);
-        return section;
     }
 
     /**
