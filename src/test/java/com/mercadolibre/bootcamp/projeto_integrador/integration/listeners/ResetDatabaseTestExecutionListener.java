@@ -10,12 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ResetDatabaseTestExecutionListener extends AbstractTestExecutionListener {
-    private static final List<String> IGNORED_TABLES = List.of();
-
     private static final String SQL_DISABLE_REFERENTIAL_INTEGRITY = "SET REFERENTIAL_INTEGRITY FALSE";
     private static final String SQL_ENABLE_REFERENTIAL_INTEGRITY = "SET REFERENTIAL_INTEGRITY TRUE";
     private static final String SQL_FIND_TABLE_NAMES = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA='%s'";
@@ -54,9 +51,7 @@ public class ResetDatabaseTestExecutionListener extends AbstractTestExecutionLis
             }
 
             for (String table : tables) {
-                if (!IGNORED_TABLES.contains(table)) {
-                    statement.executeUpdate(String.format(SQL_TRUNCATE_TABLE, schema, table));
-                }
+                statement.executeUpdate(String.format(SQL_TRUNCATE_TABLE, schema, table));
             }
 
             statement.execute(SQL_ENABLE_REFERENTIAL_INTEGRITY);
