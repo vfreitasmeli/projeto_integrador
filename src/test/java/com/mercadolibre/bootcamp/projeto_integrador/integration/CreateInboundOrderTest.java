@@ -36,10 +36,10 @@ public class CreateInboundOrderTest extends BaseControllerTest {
         manager = getSavedManager();
         forbiddenManager = getSavedManager();
 
-        Section section = getSavedSection(warehouse, manager);
+        Section section = getSavedFreshSection(warehouse, manager);
         sectionWithChilled = getSavedSection(warehouse, manager, Section.Category.CHILLED);
 
-        Product product = getSavedProduct();
+        Product product = getSavedFreshProduct();
         frozenProduct = getSavedProduct(Section.Category.FROZEN);
 
         validInboundOrderRequest = getValidInboundOrderRequestDto(section, getValidBatchRequest(product));

@@ -4,12 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Manager;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Warehouse;
+import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
 import com.mercadolibre.bootcamp.projeto_integrador.util.*;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -64,10 +62,31 @@ public class BaseControllerTest {
         return batchRequest;
     }
 
+    protected InboundOrder getSavedInboundOrder(Section section) {
+        InboundOrder inboundOrder = new InboundOrder();
+        inboundOrder.setOrderDate(LocalDate.now());
+        inboundOrder.setSection(section);
+        return inboundOrderRepository.save(inboundOrder);
+    }
+
     protected BatchRequestDto getValidBatchRequest(Product product) {
         BatchRequestDto batchRequest = BatchGenerator.newBatchRequestDTO();
         batchRequest.setProductId(product.getProductId());
         return batchRequest;
+    }
+
+    protected Batch getSavedBatch(BatchRequestDto batchRequest, InboundOrder inboundOrder) {
+        Batch batch = mapBatchRequestDtoToBatch(batchRequest);
+        batch.setInboundOrder(inboundOrder);
+        return batchRepository.save(batch);
+    }
+
+    protected Batch mapBatchRequestDtoToBatch(BatchRequestDto batchRequest) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.typeMap(BatchRequestDto.class, Batch.class).addMappings(mapper -> {
+            mapper.map(BatchRequestDto::getProductId, Batch::setProduct);
+        });
+        return modelMapper.map(batchRequest, Batch.class);
     }
 
     protected Warehouse getSavedWarehouse() {
@@ -76,7 +95,7 @@ public class BaseControllerTest {
         return warehouse;
     }
 
-    protected Product getSavedProduct() {
+    protected Product getSavedFreshProduct() {
         return getSavedProduct(Section.Category.FRESH);
     }
 
@@ -87,19 +106,19 @@ public class BaseControllerTest {
         return product;
     }
 
-    protected Section getSavedSection(Warehouse warehouse, Manager manager) {
-        return getSavedSection(warehouse, manager, 10);
+    protected Section getSavedFreshSection(Warehouse warehouse, Manager manager) {
+        return getSavedFreshSection(warehouse, manager, 5);
     }
 
-    protected Section getSavedSection(Warehouse warehouse, Manager manager, int maxBatches) {
-        Section section = SectionGenerator.getSection(warehouse, manager);
+    protected Section getSavedFreshSection(Warehouse warehouse, Manager manager, int maxBatches) {
+        Section section = SectionGenerator.getFreshSection(warehouse, manager);
         section.setMaxBatches(maxBatches);
         sectionRepository.save(section);
         return section;
     }
 
     protected Section getSavedSection(Warehouse warehouse, Manager manager, Section.Category category) {
-        Section section = SectionGenerator.getSection(warehouse, manager);
+        Section section = SectionGenerator.getFreshSection(warehouse, manager);
         section.setCategory(category);
         sectionRepository.save(section);
         return section;

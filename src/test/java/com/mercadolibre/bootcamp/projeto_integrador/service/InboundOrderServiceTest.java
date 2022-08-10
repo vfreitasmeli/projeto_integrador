@@ -66,7 +66,7 @@ class InboundOrderServiceTest {
         // Arrange
         InboundOrderRequestDto inboundOrderRequest = InboundOrderGenerator.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getCrowdedSection()));
+                .thenReturn(Optional.of(SectionGenerator.getCrowdedFreshSection()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
 
@@ -87,7 +87,7 @@ class InboundOrderServiceTest {
         InboundOrderRequestDto inboundOrderRequest = InboundOrderGenerator.newInboundRequestDTO();
         inboundOrderRequest.getBatchStock().get(0).setProductId(99);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(SectionGenerator.getFreshSectionWith1SlotAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
                 .thenReturn(new ArrayList<Product>());
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
@@ -110,7 +110,7 @@ class InboundOrderServiceTest {
         InboundOrderRequestDto inboundOrderRequest = InboundOrderGenerator.newInboundRequestDTO();
         long managerIdInvalid = 99l;
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(SectionGenerator.getFreshSectionWith1SlotAvailable()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.empty());
 
@@ -130,7 +130,7 @@ class InboundOrderServiceTest {
         // Arrange
         InboundOrderRequestDto inboundOrderRequest = InboundOrderGenerator.newInboundRequestDTO();
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSection(WarehouseGenerator.newWarehouse(),
+                .thenReturn(Optional.of(SectionGenerator.getFreshSection(WarehouseGenerator.newWarehouse(),
                         ManagerGenerator.newManager())));
         Manager unauthorizedManager = ManagerGenerator.newManager();
         unauthorizedManager.setManagerId(2);
@@ -156,7 +156,7 @@ class InboundOrderServiceTest {
         InboundOrderRequestDto inboundOrderRequest = InboundOrderGenerator.newInboundRequestDTO();
         inboundOrderRequest.getBatchStock().get(0).setProductId(2);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(SectionGenerator.getFreshSectionWith1SlotAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
                 .thenReturn(List.of(ProductsGenerator.newProductChilled()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
@@ -180,7 +180,7 @@ class InboundOrderServiceTest {
         Product productFresh = ProductsGenerator.newProductFresh();
         productFresh.setProductId(1);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSectionWith1SlotAvailable()));
+                .thenReturn(Optional.of(SectionGenerator.getFreshSectionWith1SlotAvailable()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
@@ -222,7 +222,7 @@ class InboundOrderServiceTest {
         products.get(0).setProductId(2);
         products.get(1).setProductId(3);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
-                .thenReturn(Optional.of(SectionGenerator.getSectionWith10SlotsAvailable()));
+                .thenReturn(Optional.of(SectionGenerator.getFreshSectionWith10SlotsAvailable()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
