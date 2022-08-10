@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BatchService implements IBatchService {
@@ -50,8 +51,7 @@ public class BatchService implements IBatchService {
     @Override
     public List<BatchBuyerResponseDto> findAll() {
         LocalDate minimumExpirationDate = LocalDate.now().plusDays(minimumExpirationDays);
-        List<Batch> batches = batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfter(0, minimumExpirationDate)
-                .orElseThrow(() -> new RuntimeException("Something went wrong"));
+        List<Batch> batches = batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfter(0, minimumExpirationDate);
         if (batches.isEmpty()) {
             throw new NotFoundException("Products", "There are no products in stock");
         }
@@ -59,7 +59,7 @@ public class BatchService implements IBatchService {
     }
 
     /**
-     * Método que busca a lista de Batches com estoque positovo e data de validade superior a 20 dias, filtrado por categoria.
+     * Método que busca a lista de Batches com estoque positivo e data de validade superior a 20 dias, filtrado por categoria.
      *
      * @param categoryCode
      * @return List<Batch>
@@ -69,8 +69,7 @@ public class BatchService implements IBatchService {
         Section.Category category = getCategory(categoryCode);
         LocalDate minimumExpirationDate = LocalDate.now().plusDays(minimumExpirationDays);
         List<Batch> batches = batchRepository
-                .findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(0, minimumExpirationDate, category)
-                .orElseThrow(() -> new RuntimeException("Something went wrong"));
+                .findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(0, minimumExpirationDate, category);
         if (batches.isEmpty()) {
             throw new NotFoundException("Products", "There are no products in stock in the requested category");
         }
@@ -84,10 +83,9 @@ public class BatchService implements IBatchService {
      * @return List<BatchBuyerResponseDto>
      */
     private List<BatchBuyerResponseDto> mapListBatchToListDto(List<Batch> batches) {
-        List<BatchBuyerResponseDto> batchBuyerResponse = new ArrayList<>();
-        batches.stream().forEach(
-                batch -> batchBuyerResponse.add(new BatchBuyerResponseDto(batch))
-        );
+        List<BatchBuyerResponseDto> batchBuyerResponse = batches.stream()
+                .map(batch -> new BatchBuyerResponseDto(batch))
+                .collect(Collectors.toList());
         return batchBuyerResponse;
     }
 
