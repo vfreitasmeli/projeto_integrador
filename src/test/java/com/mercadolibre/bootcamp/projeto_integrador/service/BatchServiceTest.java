@@ -3,6 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchBuyerResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.util.BatchGenerator;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,11 +68,65 @@ class BatchServiceTest {
     }
 
     @Test
-    void findBatchByCategory() {
+    void findBatchByCategory_returnBatchesChilled_whenValidCategory() {
         // Arrange
+        batches = BatchGenerator.newBatchListChilled();
+        when(batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(ArgumentMatchers.anyInt(),
+                ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(batches);
 
         // Act
+        List<BatchBuyerResponseDto> foundBatches = service.findBatchByCategory("RF");
 
         // Assert
+        assertThat(foundBatches).isNotEmpty();
+        assertEquals(foundBatches.size(), batches.size());
+        assertEquals(foundBatches.get(0).getCategory(), Section.Category.CHILLED);
+        assertEquals(foundBatches.get(1).getCategory(), Section.Category.CHILLED);
+        assertEquals(foundBatches.get(2).getCategory(), Section.Category.CHILLED);
+        assertEquals(foundBatches.get(0).getBatchNumber(), batches.get(0).getBatchNumber());
+        assertEquals(foundBatches.get(1).getBatchNumber(), batches.get(1).getBatchNumber());
+        assertEquals(foundBatches.get(2).getBatchNumber(), batches.get(2).getBatchNumber());
+    }
+
+    @Test
+    void findBatchByCategory_returnBatchesFresh_whenValidCategory() {
+        // Arrange
+        batches = BatchGenerator.newBatchList();
+        when(batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(ArgumentMatchers.anyInt(),
+                ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(batches);
+
+        // Act
+        List<BatchBuyerResponseDto> foundBatches = service.findBatchByCategory("fs");
+
+        // Assert
+        assertThat(foundBatches).isNotEmpty();
+        assertEquals(foundBatches.size(), batches.size());
+        assertEquals(foundBatches.get(0).getCategory(), Section.Category.FRESH);
+        assertEquals(foundBatches.get(1).getCategory(), Section.Category.FRESH);
+        assertEquals(foundBatches.get(2).getCategory(), Section.Category.FRESH);
+        assertEquals(foundBatches.get(0).getBatchNumber(), batches.get(0).getBatchNumber());
+        assertEquals(foundBatches.get(1).getBatchNumber(), batches.get(1).getBatchNumber());
+        assertEquals(foundBatches.get(2).getBatchNumber(), batches.get(2).getBatchNumber());
+    }
+
+    @Test
+    void findBatchByCategory_returnBatchesFrozen_whenValidCategory() {
+        // Arrange
+        batches = BatchGenerator.newBatchListFrozen();
+        when(batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(ArgumentMatchers.anyInt(),
+                ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(batches);
+
+        // Act
+        List<BatchBuyerResponseDto> foundBatches = service.findBatchByCategory("FF");
+
+        // Assert
+        assertThat(foundBatches).isNotEmpty();
+        assertEquals(foundBatches.size(), batches.size());
+        assertEquals(foundBatches.get(0).getCategory(), Section.Category.FROZEN);
+        assertEquals(foundBatches.get(1).getCategory(), Section.Category.FROZEN);
+        assertEquals(foundBatches.get(2).getCategory(), Section.Category.FROZEN);
+        assertEquals(foundBatches.get(0).getBatchNumber(), batches.get(0).getBatchNumber());
+        assertEquals(foundBatches.get(1).getBatchNumber(), batches.get(1).getBatchNumber());
+        assertEquals(foundBatches.get(2).getBatchNumber(), batches.get(2).getBatchNumber());
     }
 }

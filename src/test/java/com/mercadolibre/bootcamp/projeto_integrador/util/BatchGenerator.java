@@ -2,6 +2,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.util;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -98,6 +99,26 @@ public class BatchGenerator {
                 .build());
         batches.get(2).getInboundOrder().getSection().setSectionCode(2);
         batches.get(2).getInboundOrder().getSection().getManager().setManagerId(2);
+        return batches;
+    }
+
+    public static List<Batch> newBatchListChilled() {
+        List<Batch> batches = newBatchList();
+        for(Batch batch : batches) {
+            batch.setProduct(ProductsGenerator.newProductChilled());
+            batch.getInboundOrder().getSection().setCategory(Section.Category.CHILLED);
+            batch.getInboundOrder().getSection().getManager().setManagerId(1);
+        }
+        return batches;
+    }
+
+    public static List<Batch> newBatchListFrozen() {
+        List<Batch> batches = newBatchList();
+        for(Batch batch : batches) {
+            batch.setProduct(ProductsGenerator.newProductFrozen());
+            batch.getInboundOrder().getSection().setCategory(Section.Category.FROZEN);
+            batch.getInboundOrder().getSection().getManager().setManagerId(1);
+        }
         return batches;
     }
 }
