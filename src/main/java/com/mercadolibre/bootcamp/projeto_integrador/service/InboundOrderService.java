@@ -6,8 +6,6 @@ import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.*;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
-import org.modelmapper.Converter;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.mercadolibre.bootcamp.projeto_integrador.service.BatchService.mapDtoToBatch;
 
 @Service
 public class InboundOrderService implements IInboundOrderService {
@@ -59,15 +58,16 @@ public class InboundOrderService implements IInboundOrderService {
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, request.getBatchStock().size());
 
-        List<Batch> batches = buildBatchesForCreate(request.getBatchStock(), products);
-
         InboundOrder order = new InboundOrder();
         order.setSection(section);
         order.setOrderDate(LocalDate.now());
 
         sectionRepository.save(section);
         inboundOrderRepository.save(order);
-        batchRepository.saveAll(batches.stream().peek(batch -> batch.setInboundOrder(order)).collect(Collectors.toList()));
+
+        List<Batch> batches = buildBatchesForCreate(request.getBatchStock(), order, products);
+
+        batchRepository.saveAll(batches);
 
         return new InboundOrderResponseDto(batches);
     }
@@ -92,33 +92,7 @@ public class InboundOrderService implements IInboundOrderService {
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, (int) batchesDto.stream().filter(b -> b.getBatchNumber() == 0L).count());
 
-        List<Long> batchNumbersToUpdate = batchesDto.stream()
-                .map(BatchRequestDto::getBatchNumber)
-                .filter(batchNumber -> batchNumber > 0L)
-                .collect(Collectors.toList());
-
-        List<Batch> batchesToUpdate = batchRepository.findAllById(batchNumbersToUpdate);
-
-        boolean isAllFromSameOrder = batchesToUpdate
-                .stream()
-                .allMatch(batch -> batch.getInboundOrder().getOrderNumber() == order.getOrderNumber());
-
-        if (!isAllFromSameOrder)
-            throw new BadRequestException("Unable to update batches of different orders");
-
-        Map<Long, BatchRequestDto> batchesDtoMap = batchesDto.stream()
-                .filter(dto -> dto.getBatchNumber() > 0L)
-                .collect(Collectors.toMap(BatchRequestDto::getBatchNumber, dto -> dto));
-
-        Stream<Batch> updatedBatches = batchesToUpdate.stream()
-                .map(batch -> updateBatchFromDto(batch, batchesDtoMap.get(batch.getBatchNumber()), products));
-
-        Stream<Batch> batchesToInsert = batchesDto.stream()
-                .filter(dto -> dto.getBatchNumber() == 0L)
-                .map(dto -> mapDtoToBatch(dto, products))
-                .peek(batch -> batch.setInboundOrder(order));
-
-        List<Batch> batchesToSave = Stream.concat(updatedBatches, batchesToInsert).collect(Collectors.toList());
+        List<Batch> batchesToSave = batchService.updateAll(order, batchesDto, products);
 
         batchRepository.saveAll(batchesToSave);
         sectionRepository.save(section);
@@ -126,35 +100,14 @@ public class InboundOrderService implements IInboundOrderService {
         return new InboundOrderResponseDto(batchesToSave);
     }
 
-    private Batch updateBatchFromDto(Batch batch, BatchRequestDto dto, Map<Long, Product> products) {
-        batch.setProduct(products.get(dto.getProductId()));
-        batch.setCurrentTemperature(dto.getCurrentTemperature());
-        batch.setMinimumTemperature(dto.getMinimumTemperature());
-        batch.setManufacturingDate(dto.getManufacturingDate());
-        batch.setManufacturingTime(dto.getManufacturingTime());
-        batch.setDueDate(dto.getDueDate());
-        batch.setProductPrice(dto.getProductPrice());
-
-        int soldProducts = batch.getInitialQuantity() - batch.getCurrentQuantity();
-        batch.setCurrentQuantity(dto.getInitialQuantity() - soldProducts);
-
-        if (batch.getCurrentQuantity() < 0) {
-            throw new InitialQuantityException(dto.getInitialQuantity(), soldProducts);
-        }
-
-        batch.setInitialQuantity(dto.getInitialQuantity());
-
-        return batch;
-    }
-
     /**
      * Metodo que monta uma lista de Batch, dada lista de DTO da requisição.
      * @param batchesDto lista de BatchRequestDto.
      * @return List<Batch> pronto.
      */
-    private List<Batch> buildBatchesForCreate(List<BatchRequestDto> batchesDto, Map<Long, Product> products){
+    private List<Batch> buildBatchesForCreate(List<BatchRequestDto> batchesDto, InboundOrder order, Map<Long, Product> products){
         return batchesDto.stream()
-                .map(dto -> mapDtoToBatch(dto, products))
+                .map(dto -> mapDtoToBatch(dto, order, products))
                 .peek(batch -> batch.setBatchNumber(0L))
                 .peek(batch -> batch.setCurrentQuantity(batch.getInitialQuantity()))
                 .collect(Collectors.toList());
@@ -216,23 +169,5 @@ public class InboundOrderService implements IInboundOrderService {
             throw new MaxSizeException("Section");
         }
         section.setCurrentBatches(section.getCurrentBatches() + batchCount);
-    }
-
-    /**
-     * Metodo que faz o map do DTO de Batch para um objeto Batch e já lhe atribui um produto (que deve existir).
-     * @param dto objeto BatchRequestDto que é recebido na requisição.
-     * @param products lista de Product.
-     * @return Objeto Batch montado com um produto atribuido.
-     */
-    private Batch mapDtoToBatch(BatchRequestDto dto, Map<Long, Product> products) {
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.typeMap(BatchRequestDto.class, Batch.class).addMappings(mapper -> {
-            Converter<Long, Product> converter = context -> products.get(context.getSource());
-            mapper.using(converter).map(BatchRequestDto::getProductId, Batch::setProduct);
-        });
-        Batch batch = modelMapper.map(dto, Batch.class);
-        if (batch.getProduct() == null)
-            throw new NotFoundException("Product");
-        return batch;
     }
 }

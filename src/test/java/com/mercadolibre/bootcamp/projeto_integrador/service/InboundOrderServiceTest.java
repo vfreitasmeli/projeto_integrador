@@ -89,7 +89,7 @@ class InboundOrderServiceTest {
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
                 .thenReturn(Optional.of(SectionGenerator.getSectionWith1SlotAvailable()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
-                .thenReturn(new ArrayList<Product>());
+                .thenReturn(new ArrayList<>());
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
 
@@ -101,7 +101,6 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
-        verify(inboundOrderRepository, never()).save(ArgumentMatchers.any());
     }
 
     @Test
