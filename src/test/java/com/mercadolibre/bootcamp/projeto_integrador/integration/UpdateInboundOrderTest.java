@@ -2,7 +2,6 @@ package com.mercadolibre.bootcamp.projeto_integrador.integration;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
-import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.integration.listeners.ResetDatabase;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,12 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -52,9 +49,9 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
 
     @Test
     void updateInboundOrder_returnCreated_whenBatchExists() throws Exception {
-        // Get the current temperature from batch to make a PUT to update it (specify BatchNumber).
+        long batchNumber = batchOfFreshSaved.getBatchNumber();
         float newTemperature = batchOfFreshRequestDto.getCurrentTemperature() + 1;
-        batchOfFreshRequestDto.setBatchNumber(batchOfFreshSaved.getBatchNumber());
+        batchOfFreshRequestDto.setBatchNumber(batchNumber);
         batchOfFreshRequestDto.setCurrentTemperature(newTemperature);
 
         // Create InboundOrderRequestDto to send in PUT body
@@ -67,10 +64,9 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
                         .content(asJsonString(requestDto))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()); // TODO no requisito o status era pra ser created, rever status ou nome do teste
-
-        Batch batch = batchRepository.findById(batchOfFreshSaved.getBatchNumber()).get(); // TODO devemos consultar no BD mesmo?
-        assertThat(batch.getCurrentTemperature()).isEqualTo(newTemperature);
+                .andExpect(status().isOk()) // TODO no requisito o status era pra ser created, rever status ou nome do teste
+                .andExpect(jsonPath("$.batchStock[0].currentTemperature").value(newTemperature))
+                .andExpect(jsonPath("$.batchStock[0].batchNumber").value(batchNumber));
     }
 
     @Test
@@ -83,20 +79,14 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
         requestDto.setSectionCode(freshSection.getSectionCode());
         requestDto.setBatchStock(List.of(batchRequest));
 
-        MvcResult response = mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
+        mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                         .param("orderNumber", "" + savedFreshInboundOrder.getOrderNumber())
                         .content(asJsonString(requestDto))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andReturn();
-
-        String json = response.getResponse().getContentAsString();
-        InboundOrderResponseDto responseDto = objectMapper.readValue(json, InboundOrderResponseDto.class);
-
-        Batch batch = batchRepository.findById(responseDto.getBatchStock().get(0).getBatchNumber()).get();
-        assertThat(batch).isNotNull();
-        assertThat(batch.getInboundOrder().getOrderNumber()).isEqualTo(savedFreshInboundOrder.getOrderNumber());
+                .andExpect(jsonPath("$.batchStock[0].batchNumber").value(batchOfFreshSaved.getBatchNumber() + 1))
+                .andExpect(jsonPath("$.batchStock[0].productPrice").value(batchRequest.getProductPrice()));
     }
 
     @Test
