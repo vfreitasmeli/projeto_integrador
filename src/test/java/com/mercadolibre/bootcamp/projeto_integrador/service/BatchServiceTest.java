@@ -1,6 +1,7 @@
 package com.mercadolibre.bootcamp.projeto_integrador.service;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchBuyerResponseDto;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.BadRequestException;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
@@ -128,5 +129,30 @@ class BatchServiceTest {
         assertEquals(foundBatches.get(0).getBatchNumber(), batches.get(0).getBatchNumber());
         assertEquals(foundBatches.get(1).getBatchNumber(), batches.get(1).getBatchNumber());
         assertEquals(foundBatches.get(2).getBatchNumber(), batches.get(2).getBatchNumber());
+    }
+
+    @Test
+    void findBatchByCategory_returnNotFoundException_whenBatchesNotExistsOnCategory() {
+        // Arrange
+        batches.clear();
+        when(batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(ArgumentMatchers.anyInt(),
+                ArgumentMatchers.any(), ArgumentMatchers.any()))
+                .thenReturn(batches);
+
+        // Act
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> service.findBatchByCategory("FS"));
+
+        // Assert
+        assertThat(exception.getName()).contains("Products");
+        assertEquals(exception.getMessage(), "There are no products in stock in the requested category");
+    }
+
+    @Test
+    void findBatchByCategory_returnBadRequestException_whenInvalidCategory() {
+        // Act
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> service.findBatchByCategory("ab"));
+
+        // Assert
+        assertThat(exception.getMessage()).contains("Invalid category, try again with one of the options");
     }
 }
