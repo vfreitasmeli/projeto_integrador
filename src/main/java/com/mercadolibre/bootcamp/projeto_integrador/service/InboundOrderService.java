@@ -58,7 +58,7 @@ public class InboundOrderService implements IInboundOrderService {
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, request.getBatchStock().size());
 
-        List<Batch> batches = buildBatches(request.getBatchStock(), products);
+        List<Batch> batches = buildBatchesForCreate(request.getBatchStock(), products);
 
         InboundOrder order = new InboundOrder();
         order.setSection(section);
@@ -68,7 +68,7 @@ public class InboundOrderService implements IInboundOrderService {
         inboundOrderRepository.save(order);
         batchRepository.saveAll(batches.stream().peek(batch -> batch.setInboundOrder(order)).collect(Collectors.toList()));
 
-        return new InboundOrderResponseDto() {{ setBatchStock(batches); }};
+        return new InboundOrderResponseDto(batches);
     }
 
     /**
@@ -85,9 +85,10 @@ public class InboundOrderService implements IInboundOrderService {
         Section section = order.getSection();
         Map<Long, Product> products = getProductMap(request.getBatchStock());
 
-        List<Batch> batches = buildBatches(request.getBatchStock(), products);
-
-        batches.forEach(b -> b = batchService.update(order, b));
+        List<Batch> batches = buildBatchesForUpdate(request.getBatchStock(), products, order)
+                .stream()
+                .map(batch -> batchService.update(order, batch))
+                .collect(Collectors.toList());
 
         ensureManagerHasPermissionInSection(managerId, section);
         ensureSectionHasCompatibleCategory(section, products);
@@ -97,7 +98,7 @@ public class InboundOrderService implements IInboundOrderService {
 
         sectionRepository.save(section);
 
-        return new InboundOrderResponseDto() {{ setBatchStock(batches); }};
+        return new InboundOrderResponseDto(batches);
     }
 
     /**
@@ -105,9 +106,30 @@ public class InboundOrderService implements IInboundOrderService {
      * @param batchesDto lista de BatchRequestDto.
      * @return List<Batch> pronto.
      */
-    private List<Batch> buildBatches(List<BatchRequestDto> batchesDto, Map<Long, Product> products){
+    private List<Batch> buildBatchesForUpdate(List<BatchRequestDto> batchesDto, Map<Long, Product> products, InboundOrder order){
+        List<Batch> batches = batchesDto.stream()
+                .map(dto -> mapDtoToBatch(dto, products))
+                .collect(Collectors.toList());
+
+        boolean isAllFromSameOrder = batches.stream()
+                .filter(batch -> batch.getInboundOrder() != null)
+                .allMatch(batch -> batch.getInboundOrder().getOrderNumber() == order.getOrderNumber());
+
+        if (!isAllFromSameOrder)
+            throw new BadRequestException("The batch list to update should be all from the same order");
+
+        return batches;
+    }
+
+    /**
+     * Metodo que monta uma lista de Batch, dada lista de DTO da requisição.
+     * @param batchesDto lista de BatchRequestDto.
+     * @return List<Batch> pronto.
+     */
+    private List<Batch> buildBatchesForCreate(List<BatchRequestDto> batchesDto, Map<Long, Product> products){
         return batchesDto.stream()
                 .map(dto -> mapDtoToBatch(dto, products))
+                .peek(batch -> batch.setBatchNumber(0L))
                 .collect(Collectors.toList());
     }
 
