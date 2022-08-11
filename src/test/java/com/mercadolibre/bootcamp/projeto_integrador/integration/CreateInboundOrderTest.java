@@ -57,7 +57,7 @@ public class CreateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void createInboundOrder_ignoresBatchNumbers_whenIsGivenAValidInputWithPresentBatchNumbers() throws Exception {
+    void createInboundOrder_ignoresBatchNumbers_whenIsGivenAValidInputWithBatchNumbers() throws Exception {
         // Arrange
         final float FIRST_BATCH_TEMPERATURE = 30;
         final float SECOND_BATCH_TEMPERATURE = 50;
