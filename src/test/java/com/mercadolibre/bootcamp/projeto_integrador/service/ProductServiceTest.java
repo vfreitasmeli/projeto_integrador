@@ -72,4 +72,19 @@ class ProductServiceTest {
         assertThat(exception.getName()).contains("Product");
         assertThat(exception.getMessage()).contains("There is no product with the specified id");
     }
+
+    @Test
+    void getWarehouses_returnProductWithoutWarehouse_whenProductWithoutBatches() {
+        // Arrange
+        when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
+        batches.clear();
+        when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
+
+        // Act
+        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId());
+
+        // Assert
+        assertEquals(foundProduct.getProductId(), product.getProductId());
+        assertThat(foundProduct.getWarehouses()).isEmpty();
+    }
 }
