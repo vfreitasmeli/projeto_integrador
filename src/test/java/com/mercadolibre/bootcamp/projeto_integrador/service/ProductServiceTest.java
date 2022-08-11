@@ -1,6 +1,7 @@
 package com.mercadolibre.bootcamp.projeto_integrador.service;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductResponseDto;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
@@ -55,5 +57,19 @@ class ProductServiceTest {
         assertEquals(foundProduct.getWarehouses().get(0).getWarehouseCode(), 1);
         assertEquals(foundProduct.getWarehouses().get(1).getTotalQuantity(), 40);
         assertEquals(foundProduct.getWarehouses().get(1).getWarehouseCode(), 2);
+    }
+
+    @Test
+    void getWarehouses_returnNotFoundException_whenProductNotExist() {
+        // Arrange
+        when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.empty());
+
+        // Act
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.getWarehouses(product.getProductId()));
+
+        // Assert
+        assertThat(exception.getName()).contains("Product");
+        assertThat(exception.getMessage()).contains("There is no product with the specified id");
     }
 }
