@@ -58,31 +58,36 @@ public class CreateInboundOrderTest extends BaseControllerTest {
 
     @Test
     void createInboundOrder_ignoresBatchNumbers_whenIsGivenAValidInputWithPresentBatchNumbers() throws Exception {
+        // Arrange
         final float FIRST_BATCH_TEMPERATURE = 30;
         final float SECOND_BATCH_TEMPERATURE = 50;
 
         BatchRequestDto firstBatch = getValidBatchRequest(product);
         firstBatch.setCurrentTemperature(FIRST_BATCH_TEMPERATURE);
 
+        BatchRequestDto secondBatchWithSameId = getValidBatchRequest(product);
+        secondBatchWithSameId.setBatchNumber(1L);
+        secondBatchWithSameId.setCurrentTemperature(SECOND_BATCH_TEMPERATURE);
+
+        // Sanity check (The database should be empty before the test)
+        assertThat(batchRepository.findAll()).isEmpty();
+
+        // Act
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
                         .content(asJsonString(getValidInboundOrderRequestDto(section, firstBatch)))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON));
-
-        assertThat(batchRepository.existsById(1L)).isTrue();
-
-        BatchRequestDto secondBatchWithSameId = getValidBatchRequest(product);
-        secondBatchWithSameId.setBatchNumber(1L);
-        secondBatchWithSameId.setCurrentTemperature(SECOND_BATCH_TEMPERATURE);
 
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
                         .content(asJsonString(getValidInboundOrderRequestDto(section, secondBatchWithSameId)))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON));
 
-        Batch batch1 = batchRepository.findById(1L).get();
-        Batch batch2 = batchRepository.findById(2L).get();
+        Batch batch1 = batchRepository.findById(1L).orElse(null);
+        Batch batch2 = batchRepository.findById(2L).orElse(null);
 
+        assertThat(batch1).isNotNull();
+        assertThat(batch2).isNotNull();
         assertThat(batch1.getCurrentTemperature()).isEqualTo(FIRST_BATCH_TEMPERATURE);
         assertThat(batch2.getCurrentTemperature()).isEqualTo(SECOND_BATCH_TEMPERATURE);
     }
