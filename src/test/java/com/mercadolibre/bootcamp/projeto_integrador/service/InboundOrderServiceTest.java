@@ -199,7 +199,6 @@ class InboundOrderServiceTest {
         assertThat(inboundResponse).isNotNull();
         Batch batchResponse = inboundResponse.getBatchStock().get(0);
         BatchRequestDto batchRequest = inboundOrderRequest.getBatchStock().get(0);
-        assertThat(batchResponse.getBatchNumber()).isEqualTo(batchRequest.getBatchNumber());
         assertThat(batchResponse.getProduct().getProductId()).isEqualTo(batchRequest.getProductId());
         assertThat(batchResponse.getCurrentTemperature()).isEqualTo(batchRequest.getCurrentTemperature());
         assertThat(batchResponse.getMinimumTemperature()).isEqualTo(batchRequest.getMinimumTemperature());
@@ -241,7 +240,6 @@ class InboundOrderServiceTest {
         assertThat(inboundResponse).isNotNull();
         Batch batchResponse = inboundResponse.getBatchStock().get(0);
         BatchRequestDto batchRequest = inboundOrderRequest.getBatchStock().get(0);
-        assertThat(batchResponse.getBatchNumber()).isEqualTo(batchRequest.getBatchNumber());
         assertThat(batchResponse.getProduct().getProductId()).isEqualTo(batchRequest.getProductId());
         assertThat(batchResponse.getCurrentTemperature()).isEqualTo(batchRequest.getCurrentTemperature());
         assertThat(batchResponse.getMinimumTemperature()).isEqualTo(batchRequest.getMinimumTemperature());
