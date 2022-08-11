@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class InboundOrderService implements IInboundOrderService {
@@ -82,43 +83,68 @@ public class InboundOrderService implements IInboundOrderService {
     public InboundOrderResponseDto update(long orderNumber, InboundOrderRequestDto request, long managerId) {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
                 .orElseThrow(() -> new NotFoundException("Inbound Order"));
-        Section section = order.getSection();
-        Map<Long, Product> products = getProductMap(request.getBatchStock());
 
-        List<Batch> batches = buildBatchesForUpdate(request.getBatchStock(), products, order)
-                .stream()
-                .map(batch -> batchService.update(order, batch))
-                .collect(Collectors.toList());
+        Section section = order.getSection();
+        List<BatchRequestDto> batchesDto = request.getBatchStock();
+        Map<Long, Product> products = getProductMap(batchesDto);
 
         ensureManagerHasPermissionInSection(managerId, section);
         ensureSectionHasCompatibleCategory(section, products);
-        ensureSectionHasSpace(section, (int) request.getBatchStock().stream()
-                .filter(b -> b.getBatchNumber() == 0)
-                .count());
+        ensureSectionHasSpace(section, (int) batchesDto.stream().filter(b -> b.getBatchNumber() == 0L).count());
 
-        sectionRepository.save(section);
-
-        return new InboundOrderResponseDto(batches);
-    }
-
-    /**
-     * Metodo que monta uma lista de Batch, dada lista de DTO da requisição.
-     * @param batchesDto lista de BatchRequestDto.
-     * @return List<Batch> pronto.
-     */
-    private List<Batch> buildBatchesForUpdate(List<BatchRequestDto> batchesDto, Map<Long, Product> products, InboundOrder order){
-        List<Batch> batches = batchesDto.stream()
-                .map(dto -> mapDtoToBatch(dto, products))
+        List<Long> batchNumbersToUpdate = batchesDto.stream()
+                .map(BatchRequestDto::getBatchNumber)
+                .filter(batchNumber -> batchNumber > 0L)
                 .collect(Collectors.toList());
 
-        boolean isAllFromSameOrder = batches.stream()
-                .filter(batch -> batch.getInboundOrder() != null)
+        List<Batch> batchesToUpdate = batchRepository.findAllById(batchNumbersToUpdate);
+
+        boolean isAllFromSameOrder = batchesToUpdate
+                .stream()
                 .allMatch(batch -> batch.getInboundOrder().getOrderNumber() == order.getOrderNumber());
 
         if (!isAllFromSameOrder)
-            throw new BadRequestException("The batch list to update should be all from the same order");
+            throw new BadRequestException("Unable to update batches of different orders");
 
-        return batches;
+        Map<Long, BatchRequestDto> batchesDtoMap = batchesDto.stream()
+                .filter(dto -> dto.getBatchNumber() > 0L)
+                .collect(Collectors.toMap(BatchRequestDto::getBatchNumber, dto -> dto));
+
+        Stream<Batch> updatedBatches = batchesToUpdate.stream()
+                .map(batch -> updateBatchFromDto(batch, batchesDtoMap.get(batch.getBatchNumber()), products));
+
+        Stream<Batch> batchesToInsert = batchesDto.stream()
+                .filter(dto -> dto.getBatchNumber() == 0L)
+                .map(dto -> mapDtoToBatch(dto, products))
+                .peek(batch -> batch.setInboundOrder(order));
+
+        List<Batch> batchesToSave = Stream.concat(updatedBatches, batchesToInsert).collect(Collectors.toList());
+
+        batchRepository.saveAll(batchesToSave);
+        sectionRepository.save(section);
+
+        return new InboundOrderResponseDto(batchesToSave);
+    }
+
+    private Batch updateBatchFromDto(Batch batch, BatchRequestDto dto, Map<Long, Product> products) {
+        batch.setProduct(products.get(dto.getProductId()));
+        batch.setCurrentTemperature(dto.getCurrentTemperature());
+        batch.setMinimumTemperature(dto.getMinimumTemperature());
+        batch.setManufacturingDate(dto.getManufacturingDate());
+        batch.setManufacturingTime(dto.getManufacturingTime());
+        batch.setDueDate(dto.getDueDate());
+        batch.setProductPrice(dto.getProductPrice());
+
+        int soldProducts = batch.getInitialQuantity() - batch.getCurrentQuantity();
+        batch.setCurrentQuantity(dto.getInitialQuantity() - soldProducts);
+
+        if (batch.getCurrentQuantity() < 0) {
+            throw new InitialQuantityException(dto.getInitialQuantity(), soldProducts);
+        }
+
+        batch.setInitialQuantity(dto.getInitialQuantity());
+
+        return batch;
     }
 
     /**
@@ -130,6 +156,7 @@ public class InboundOrderService implements IInboundOrderService {
         return batchesDto.stream()
                 .map(dto -> mapDtoToBatch(dto, products))
                 .peek(batch -> batch.setBatchNumber(0L))
+                .peek(batch -> batch.setCurrentQuantity(batch.getInitialQuantity()))
                 .collect(Collectors.toList());
     }
 
@@ -206,8 +233,6 @@ public class InboundOrderService implements IInboundOrderService {
         Batch batch = modelMapper.map(dto, Batch.class);
         if (batch.getProduct() == null)
             throw new NotFoundException("Product");
-
-        batch.setCurrentQuantity(dto.getInitialQuantity());
         return batch;
     }
 }
