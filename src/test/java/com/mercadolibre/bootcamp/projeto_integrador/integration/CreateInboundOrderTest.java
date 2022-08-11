@@ -86,6 +86,7 @@ public class CreateInboundOrderTest extends BaseControllerTest {
         Batch batch1 = batchRepository.findById(1L).orElse(null);
         Batch batch2 = batchRepository.findById(2L).orElse(null);
 
+        // Assert
         assertThat(batch1).isNotNull();
         assertThat(batch2).isNotNull();
         assertThat(batch1.getCurrentTemperature()).isEqualTo(FIRST_BATCH_TEMPERATURE);
