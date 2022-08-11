@@ -44,7 +44,7 @@ public class BatchGenerator {
                 .initialQuantity(20)
                 .manufacturingDate(LocalDate.now().minusDays(2))
                 .manufacturingTime(LocalDateTime.now().minusDays(2))
-                .dueDate(LocalDate.now().plusDays(10))
+                .dueDate(LocalDate.now().plusDays(21))
                 .productPrice(new BigDecimal("2.49"))
                 .build()
         );
