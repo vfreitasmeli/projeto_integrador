@@ -83,17 +83,17 @@ public class InboundOrderService implements IInboundOrderService {
         InboundOrder order = inboundOrderRepository.findById(orderNumber)
                 .orElseThrow(() -> new NotFoundException("Inbound Order"));
         Section section = order.getSection();
-        Map<Long, Product> products = getProductMap(request.getBatchStock());
-
-        List<Batch> batches = buildBatches(request.getBatchStock(), products);
-
-        batches.forEach(b -> b = batchService.update(order, b));
-
         ensureManagerHasPermissionInSection(managerId, section);
+
+        Map<Long, Product> products = getProductMap(request.getBatchStock());
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, (int) request.getBatchStock().stream()
                 .filter(b -> b.getBatchNumber() == 0)
                 .count());
+
+        List<Batch> batches = buildBatches(request.getBatchStock(), products);
+
+        batches.forEach(b -> b = batchService.update(order, b));
 
         sectionRepository.save(section);
 
