@@ -92,7 +92,6 @@ class BatchServiceTest {
     @Test
     void findBatchByCategory_returnBatchesFresh_whenValidCategory() {
         // Arrange
-        batches = BatchGenerator.newBatchList();
         when(batchRepository.findByCurrentQuantityGreaterThanAndDueDateAfterAndProduct_CategoryIs(ArgumentMatchers.anyInt(),
                 ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(batches);
 
