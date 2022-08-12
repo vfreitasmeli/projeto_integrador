@@ -4,11 +4,8 @@ import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.integration.listeners.ResetDatabase;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
-import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
-import com.mercadolibre.bootcamp.projeto_integrador.repository.IInboundOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -18,20 +15,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ResetDatabase
 public class CreateInboundOrderTest extends BaseControllerTest {
-    @Autowired
-    IInboundOrderRepository inboundOrderRepository;
-
-    @Autowired
-    IBatchRepository batchRepository;
-
     private Manager manager;
     private Manager forbiddenManager;
     private Section sectionWithChilled;
     private Product frozenProduct;
+    private Product product;
+    private Section section;
 
     private InboundOrderRequestDto validInboundOrderRequest;
     private InboundOrderRequestDto invalidInboundOrderRequest;
@@ -43,10 +37,10 @@ public class CreateInboundOrderTest extends BaseControllerTest {
         manager = getSavedManager();
         forbiddenManager = getSavedManager();
 
-        Section section = getSavedFreshSection(warehouse, manager);
+        section = getSavedFreshSection(warehouse, manager);
         sectionWithChilled = getSavedSection(warehouse, manager, Section.Category.CHILLED);
 
-        Product product = getSavedFreshProduct();
+        product = getSavedFreshProduct();
         frozenProduct = getSavedProduct(Section.Category.FROZEN);
 
         validInboundOrderRequest = getValidInboundOrderRequestDto(section, getValidBatchRequest(product));
@@ -54,7 +48,7 @@ public class CreateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void createInboundOrder_returnsOk_whenIsGivenAValidInput() throws Exception {
+    void createInboundOrder_returnsCreated_whenIsGivenAValidInput() throws Exception {
         int quantityInboundOrder = inboundOrderRepository.findAll().size();
         int quantityBatch = batchRepository.findAll().size();
 
@@ -81,6 +75,43 @@ public class CreateInboundOrderTest extends BaseControllerTest {
 
         assertThat(inboundOrderRepository.findAll().size()).isEqualTo(quantityInboundOrder);
         assertThat(batchRepository.findAll().size()).isEqualTo(quantityBatch);
+    }
+
+    @Test
+    void createInboundOrder_ignoresBatchNumbers_whenIsGivenAValidInputWithBatchNumbers() throws Exception {
+        // Arrange
+        final float FIRST_BATCH_TEMPERATURE = 30;
+        final float SECOND_BATCH_TEMPERATURE = 50;
+
+        BatchRequestDto firstBatch = getValidBatchRequest(product);
+        firstBatch.setCurrentTemperature(FIRST_BATCH_TEMPERATURE);
+
+        BatchRequestDto secondBatchWithSameId = getValidBatchRequest(product);
+        secondBatchWithSameId.setBatchNumber(1L);
+        secondBatchWithSameId.setCurrentTemperature(SECOND_BATCH_TEMPERATURE);
+
+        // Sanity check (The database should be empty before the test)
+        assertThat(batchRepository.findAll()).isEmpty();
+
+        // Act
+        mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
+                .content(asJsonString(getValidInboundOrderRequestDto(section, firstBatch)))
+                .header("Manager-Id", manager.getManagerId())
+                .contentType(MediaType.APPLICATION_JSON));
+
+        mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
+                .content(asJsonString(getValidInboundOrderRequestDto(section, secondBatchWithSameId)))
+                .header("Manager-Id", manager.getManagerId())
+                .contentType(MediaType.APPLICATION_JSON));
+
+        Batch batch1 = batchRepository.findById(1L).orElse(null);
+        Batch batch2 = batchRepository.findById(2L).orElse(null);
+
+        // Assert
+        assertThat(batch1).isNotNull();
+        assertThat(batch2).isNotNull();
+        assertThat(batch1.getCurrentTemperature()).isEqualTo(FIRST_BATCH_TEMPERATURE);
+        assertThat(batch2.getCurrentTemperature()).isEqualTo(SECOND_BATCH_TEMPERATURE);
     }
 
     @Test

@@ -2,6 +2,8 @@ package com.mercadolibre.bootcamp.projeto_integrador.util;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
+import com.mercadolibre.bootcamp.projeto_integrador.model.InboundOrder;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
 
 import java.math.BigDecimal;
@@ -50,6 +52,21 @@ public class BatchGenerator {
         );
 
         return batchRequests;
+    }
+
+    public static Batch newBatch(Product product, InboundOrder order) {
+        Batch batch = new Batch();
+        batch.setInitialQuantity(15);
+        batch.setCurrentQuantity(batch.getInitialQuantity());
+        batch.setCurrentTemperature(15.0f);
+        batch.setMinimumTemperature(5.0f);
+        batch.setManufacturingDate(LocalDate.now().minusDays(2));
+        batch.setManufacturingTime(LocalDateTime.now().minusDays(2));
+        batch.setDueDate(LocalDate.now().plusDays(10));
+        batch.setProductPrice(new BigDecimal("2.49"));
+        batch.setProduct(product);
+        batch.setInboundOrder(order);
+        return batch;
     }
 
     public static List<Batch> newBatchList() {

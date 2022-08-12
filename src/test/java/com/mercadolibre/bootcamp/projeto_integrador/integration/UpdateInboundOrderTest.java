@@ -2,16 +2,15 @@ package com.mercadolibre.bootcamp.projeto_integrador.integration;
 
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
+import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.integration.listeners.ResetDatabase;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
-import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
-import com.mercadolibre.bootcamp.projeto_integrador.repository.IInboundOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,29 +21,25 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
 @AutoConfigureMockMvc
 @ResetDatabase
 public class UpdateInboundOrderTest extends BaseControllerTest {
-    @Autowired
-    IInboundOrderRepository inboundOrderRepository;
-
-    @Autowired
-    IBatchRepository batchRepository;
-
     private Warehouse warehouse;
     private Manager manager;
     private Manager forbiddenManager;
     private Section freshSection;
     private Product freshProduct;
 
+    private InboundOrderRequestDto validInboundOrderRequest;
     private InboundOrder savedFreshInboundOrder;
     private long orderNumber;
     private BatchRequestDto batchOfFreshRequestDto;
     private Batch batchOfFreshSaved;
 
     @BeforeEach
-    private void setup() {
+    void setup() {
         warehouse = getSavedWarehouse();
 
         manager = getSavedManager();
@@ -57,22 +52,22 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
         orderNumber = savedFreshInboundOrder.getOrderNumber();
         batchOfFreshRequestDto = getValidBatchRequest(freshProduct);
         batchOfFreshSaved = getSavedBatch(batchOfFreshRequestDto, savedFreshInboundOrder);
+        validInboundOrderRequest = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
     }
 
     @Test
-    void updateInboundOrder_returnOk_whenBatchExists() throws Exception {
+    void updateInboundOrder_returnsOk_whenBatchExists() throws Exception {
         // Update current batch temperature
         long batchNumber = batchOfFreshSaved.getBatchNumber();
         Batch oldBatch = batchRepository.findById(batchNumber).get();
         float newTemperature = oldBatch.getCurrentTemperature() + 1;
         batchOfFreshRequestDto.setBatchNumber(batchNumber);
         batchOfFreshRequestDto.setCurrentTemperature(newTemperature);
-        InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
         int quantityInboundOrder = inboundOrderRepository.findAll().size();
 
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                         .param("orderNumber", "" + orderNumber)
-                        .content(asJsonString(requestDto))
+                        .content(asJsonString(getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto)))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -85,26 +80,33 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnOk_whenBatchNotExists() throws Exception {
+    void updateInboundOrder_returnsOk_whenBatchNotExists() throws Exception {
         InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
         int quantityInboundOrder = inboundOrderRepository.findAll().size();
         int quantityBatch = batchRepository.findAll().size();
 
-        mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
+        MvcResult response = mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                         .param("orderNumber", "" + orderNumber)
-                        .content(asJsonString(requestDto))
+                        .content(asJsonString(validInboundOrderRequest))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batchStock[0].batchNumber").value(batchOfFreshSaved.getBatchNumber() + 1))
-                .andExpect(jsonPath("$.batchStock[0].productPrice").value(batchOfFreshRequestDto.getProductPrice()));
+                .andExpect(jsonPath("$.batchStock[0].productPrice").value(batchOfFreshRequestDto.getProductPrice()))
+                .andReturn();
 
+        String json = response.getResponse().getContentAsString();
+        InboundOrderResponseDto responseDto = objectMapper.readValue(json, InboundOrderResponseDto.class);
+
+        Batch batch = batchRepository.findById(responseDto.getBatchStock().get(0).getBatchNumber()).get();
+        assertThat(batch).isNotNull();
+        assertThat(batch.getInboundOrder().getOrderNumber()).isEqualTo(orderNumber);
         assertThat(inboundOrderRepository.findAll().size()).isEqualTo(quantityInboundOrder);
         assertThat(batchRepository.findAll().size()).isEqualTo(quantityBatch + 1);
     }
 
     @Test
-    void updateInboundOrder_returnNotFound_whenInboundOrderIdNotExists() throws Exception {
+    void updateInboundOrder_returnsNotFound_whenInboundOrderIdNotExists() throws Exception {
         InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
         int quantityInboundOrder = inboundOrderRepository.findAll().size();
         int quantityBatch = batchRepository.findAll().size();
@@ -122,7 +124,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnBadRequest_whenSectionDoesNotHaveEnoughSpace() throws Exception {
+    void updateInboundOrder_returnsBadRequest_whenSectionDoesNotHaveEnoughSpace() throws Exception {
         int availableSlots = freshSection.getAvailableSlots();
         List<BatchRequestDto> batches = new ArrayList<>();
         for (int i = 0; i < availableSlots+1; i++) {
@@ -148,7 +150,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnBadRequest_whenInvalidInitialQuantity() throws Exception {
+    void updateInboundOrder_returnsBadRequest_whenInvalidInitialQuantity() throws Exception {
         int batchInicialQuantity = batchOfFreshSaved.getInitialQuantity();
         long batchNumber = batchOfFreshSaved.getBatchNumber();
         // Change initial quantity to less than what have been sold
@@ -159,7 +161,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
 
         mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
                         .param("orderNumber", "" + orderNumber)
-                        .content(asJsonString(requestDto))
+                        .content(asJsonString(getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto)))
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -171,7 +173,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnForbidden_whenOriginalInboundOrderIsFromAnotherManager() throws Exception {
+    void updateInboundOrder_returnsForbidden_whenOriginalInboundOrderIsFromAnotherManager() throws Exception {
         InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
         int quantityBatch = batchRepository.findAll().size();
 
@@ -186,7 +188,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnForbidden_whenSectionIsFromAnotherManager() throws Exception {
+    void updateInboundOrder_returnsForbidden_whenSectionIsFromAnotherManager() throws Exception {
         Section newSection = getSavedFreshSection(warehouse, forbiddenManager);
         InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(newSection, batchOfFreshRequestDto);
         int quantityBatch = batchRepository.findAll().size();
@@ -204,7 +206,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnBadRequest_whenBatchIsFromAnotherManager() throws Exception {
+    void updateInboundOrder_returnsBadRequest_whenBatchIsFromAnotherManager() throws Exception {
         // Save batch by another manager
         Section freshSectionFromAnotherManager = getSavedFreshSection(warehouse, forbiddenManager);
         InboundOrder freshInboundFromAnotherManager = getSavedInboundOrder(freshSectionFromAnotherManager);
@@ -230,7 +232,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnBadRequest_whenIsNotGivenManagerIdHeader() throws Exception {
+    void updateInboundOrder_returnsBadRequest_whenIsNotGivenManagerIdHeader() throws Exception {
         InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(freshSection, batchOfFreshRequestDto);
         int quantityBatch = batchRepository.findAll().size();
 
@@ -245,7 +247,7 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnBadRequest_whenIsGivenIncompatibleProducts() throws Exception {
+    void updateInboundOrder_returnsBadRequest_whenIsGivenIncompatibleProducts() throws Exception {
         Product frozenProduct = getSavedProduct(Section.Category.FROZEN);
         BatchRequestDto batchOfFrozenRequest = getValidBatchRequest(frozenProduct);
         InboundOrderRequestDto incompatibleRequestDto = getValidInboundOrderRequestDto(freshSection, batchOfFrozenRequest);
@@ -260,5 +262,24 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.name").value("Incompatible category"));
 
         assertThat(batchRepository.findAll().size()).isEqualTo(quantityBatch);
+    }
+
+    @Test
+    void updateInboundOrder_returnsBadRequest_whenIsGivenBatchesOfDifferentOrders() throws Exception {
+        InboundOrder order1 = getSavedInboundOrder(freshSection);
+        InboundOrder order2 = getSavedInboundOrder(freshSection);
+
+        Batch batch1 = getSavedBatch(freshProduct, order1);
+        Batch batch2 = getSavedBatch(freshProduct, order2);
+
+        BatchRequestDto request1 = modelMapper.map(batch1, BatchRequestDto.class);
+        BatchRequestDto request2 = modelMapper.map(batch2, BatchRequestDto.class);
+
+        mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
+                        .param("orderNumber", String.valueOf(1L))
+                        .content(asJsonString(getValidInboundOrderRequestDto(freshSection, request1, request2)))
+                        .header("Manager-Id", manager.getManagerId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }

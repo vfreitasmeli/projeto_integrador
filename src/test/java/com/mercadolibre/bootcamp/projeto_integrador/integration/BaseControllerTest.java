@@ -19,6 +19,7 @@ import java.util.List;
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 public class BaseControllerTest {
     protected final ObjectMapper objectMapper;
+    protected final ModelMapper modelMapper;
 
     @Autowired
     protected MockMvc mockMvc;
@@ -38,9 +39,10 @@ public class BaseControllerTest {
     public BaseControllerTest() {
         objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
+        modelMapper = new ModelMapper();
     }
 
-    protected InboundOrderRequestDto getValidInboundOrderRequestDto(Section section, BatchRequestDto batchRequest) {
+    protected InboundOrderRequestDto getValidInboundOrderRequestDto(Section section, BatchRequestDto... batchRequest) {
         InboundOrderRequestDto requestDto = new InboundOrderRequestDto();
         requestDto.setBatchStock(List.of(batchRequest));
         requestDto.setSectionCode(section.getSectionCode());
@@ -128,6 +130,12 @@ public class BaseControllerTest {
         Manager manager = ManagerGenerator.newManager();
         managerRepository.save(manager);
         return manager;
+    }
+
+    protected Batch getSavedBatch(Product product, InboundOrder order) {
+        Batch batch = BatchGenerator.newBatch(product, order);
+        batchRepository.save(batch);
+        return batch;
     }
 
     protected String asJsonString(final Object obj) throws JsonProcessingException {
