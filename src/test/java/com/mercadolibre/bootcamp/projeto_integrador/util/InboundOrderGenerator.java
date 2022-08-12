@@ -15,10 +15,10 @@ public class InboundOrderGenerator {
     }
 
     public static InboundOrder newFreshInboundOrder() {
-        InboundOrder inboundOrder = new InboundOrder();
-        inboundOrder.setOrderNumber(1l);
-        inboundOrder.setSection(SectionGenerator.getFreshSectionWith1SlotAvailable());
-        inboundOrder.setOrderDate(LocalDate.now());
-        return inboundOrder;
+        return InboundOrder.builder()
+                .orderNumber(1l)
+                .orderDate(LocalDate.now().minusDays(1))
+                .section(SectionGenerator.getFreshSectionWith10SlotsAvailable())
+                .build();
     }
 }
