@@ -52,9 +52,9 @@ public class InboundOrderService implements IInboundOrderService {
             throw new NotFoundException("Section");
 
         Section section = foundSection.get();
-        Map<Long, Product> products = getProductMap(request.getBatchStock());
-
         ensureManagerHasPermissionInSection(managerId, section);
+
+        Map<Long, Product> products = getProductMap(request.getBatchStock());
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, request.getBatchStock().size());
 
@@ -85,10 +85,10 @@ public class InboundOrderService implements IInboundOrderService {
                 .orElseThrow(() -> new NotFoundException("Inbound Order"));
 
         Section section = order.getSection();
+        ensureManagerHasPermissionInSection(managerId, section);
+
         List<BatchRequestDto> batchesDto = request.getBatchStock();
         Map<Long, Product> products = getProductMap(batchesDto);
-
-        ensureManagerHasPermissionInSection(managerId, section);
         ensureSectionHasCompatibleCategory(section, products);
         ensureSectionHasSpace(section, (int) batchesDto.stream().filter(b -> b.getBatchNumber() == 0L).count());
 
