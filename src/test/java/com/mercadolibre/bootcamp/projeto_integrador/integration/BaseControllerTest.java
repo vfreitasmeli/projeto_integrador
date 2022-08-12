@@ -71,17 +71,9 @@ public class BaseControllerTest {
     }
 
     protected Batch getSavedBatch(BatchRequestDto batchRequest, InboundOrder inboundOrder) {
-        Batch batch = mapBatchRequestDtoToBatch(batchRequest);
+        Batch batch = BatchGenerator.mapBatchRequestDtoToBatch(batchRequest);
         batch.setInboundOrder(inboundOrder);
         return batchRepository.save(batch);
-    }
-
-    protected Batch mapBatchRequestDtoToBatch(BatchRequestDto batchRequest) {
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.typeMap(BatchRequestDto.class, Batch.class).addMappings(mapper -> {
-            mapper.map(BatchRequestDto::getProductId, Batch::setProduct);
-        });
-        return modelMapper.map(batchRequest, Batch.class);
     }
 
     protected Warehouse getSavedWarehouse() {

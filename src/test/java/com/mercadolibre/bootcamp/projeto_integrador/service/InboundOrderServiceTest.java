@@ -3,6 +3,7 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
+import com.mercadolibre.bootcamp.projeto_integrador.integration.BaseControllerTest;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
 import com.mercadolibre.bootcamp.projeto_integrador.util.*;
@@ -360,6 +361,8 @@ class InboundOrderServiceTest {
                 .thenReturn(Optional.of(InboundOrderGenerator.newFreshInboundOrder()));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
+        when(productRepository.findAllById(ArgumentMatchers.anyList()))
+                .thenReturn(null);
 
         // Act
         RuntimeException exception = assertThrows(
@@ -401,14 +404,16 @@ class InboundOrderServiceTest {
         productFreshWithId.setProductId(1l);
         InboundOrder savedInboundOrder = InboundOrderGenerator.newFreshInboundOrder();
         savedInboundOrder.setSection(SectionGenerator.getFreshSectionWith1SlotAvailable());
+        List<Batch> batches = List.of(BatchGenerator.mapBatchRequestDtoToBatch(inboundOrderRequest.getBatchStock().get(0)));
+        batches.get(0).setCurrentQuantity(batches.get(0).getInitialQuantity());
         when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(savedInboundOrder));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
                 .thenReturn(List.of(productFreshWithId));
-        when(batchService.update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class)))
-                .thenReturn(null);
+        when(batchService.updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap()))
+                .thenReturn(batches);
         when(sectionRepository.save(ArgumentMatchers.any(Section.class)))
                 .thenReturn(null);
 
@@ -420,7 +425,6 @@ class InboundOrderServiceTest {
         Batch batchResponse = inboundResponse.getBatchStock().get(0);
         BatchRequestDto batchRequest = inboundOrderRequest.getBatchStock().get(0);
         assertThat(batchResponse.getBatchNumber()).isEqualTo(batchRequest.getBatchNumber());
-        assertThat(batchResponse.getProduct().getProductId()).isEqualTo(batchRequest.getProductId());
         assertThat(batchResponse.getCurrentTemperature()).isEqualTo(batchRequest.getCurrentTemperature());
         assertThat(batchResponse.getMinimumTemperature()).isEqualTo(batchRequest.getMinimumTemperature());
         assertThat(batchResponse.getInitialQuantity()).isEqualTo(batchRequest.getInitialQuantity());
@@ -441,14 +445,16 @@ class InboundOrderServiceTest {
         savedInboundOrder.getSection().setCurrentBatches(
                 savedInboundOrder.getSection().getMaxBatches()
         );
+        List<Batch> batches = List.of(BatchGenerator.mapBatchRequestDtoToBatch(inboundOrderRequest.getBatchStock().get(0)));
+        batches.get(0).setCurrentQuantity(batches.get(0).getInitialQuantity());
         when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(savedInboundOrder));
         when(managerRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
         when(productRepository.findAllById(ArgumentMatchers.anyList()))
                 .thenReturn(List.of(productFresh));
-        when(batchService.update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class)))
-                .thenReturn(null);
+        when(batchService.updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap()))
+                .thenReturn(batches);
         when(sectionRepository.save(ArgumentMatchers.any(Section.class)))
                 .thenReturn(null);
 
@@ -460,7 +466,6 @@ class InboundOrderServiceTest {
         Batch batchResponse = inboundResponse.getBatchStock().get(0);
         BatchRequestDto batchRequest = inboundOrderRequest.getBatchStock().get(0);
         assertThat(batchResponse.getBatchNumber()).isEqualTo(batchRequest.getBatchNumber());
-        assertThat(batchResponse.getProduct().getProductId()).isEqualTo(batchRequest.getProductId());
         assertThat(batchResponse.getCurrentTemperature()).isEqualTo(batchRequest.getCurrentTemperature());
         assertThat(batchResponse.getMinimumTemperature()).isEqualTo(batchRequest.getMinimumTemperature());
         assertThat(batchResponse.getInitialQuantity()).isEqualTo(batchRequest.getInitialQuantity());

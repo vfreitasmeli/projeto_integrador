@@ -5,6 +5,7 @@ import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
 import com.mercadolibre.bootcamp.projeto_integrador.model.InboundOrder;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Section;
+import org.modelmapper.ModelMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -137,5 +138,13 @@ public class BatchGenerator {
             batch.getInboundOrder().getSection().getManager().setManagerId(1);
         }
         return batches;
+    }
+
+    public static Batch mapBatchRequestDtoToBatch(BatchRequestDto batchRequest) {
+        ModelMapper modelMapper = new ModelMapper();
+        modelMapper.typeMap(BatchRequestDto.class, Batch.class).addMappings(mapper -> {
+            mapper.map(BatchRequestDto::getProductId, Batch::setProduct);
+        });
+        return modelMapper.map(batchRequest, Batch.class);
     }
 }
