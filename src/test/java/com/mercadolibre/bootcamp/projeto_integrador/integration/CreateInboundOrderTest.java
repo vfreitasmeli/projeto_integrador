@@ -95,14 +95,14 @@ public class CreateInboundOrderTest extends BaseControllerTest {
 
         // Act
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
-                .content(asJsonString(getValidInboundOrderRequestDto(section, firstBatch)))
-                .header("Manager-Id", manager.getManagerId())
-                .contentType(MediaType.APPLICATION_JSON));
+                        .content(asJsonString(getValidInboundOrderRequestDto(section, firstBatch)))
+                        .header("Manager-Id", manager.getManagerId())
+                        .contentType(MediaType.APPLICATION_JSON));
 
         mockMvc.perform(post("/api/v1/fresh-products/inboundorder")
-                .content(asJsonString(getValidInboundOrderRequestDto(section, secondBatchWithSameId)))
-                .header("Manager-Id", manager.getManagerId())
-                .contentType(MediaType.APPLICATION_JSON));
+                        .content(asJsonString(getValidInboundOrderRequestDto(section, secondBatchWithSameId)))
+                        .header("Manager-Id", manager.getManagerId())
+                        .contentType(MediaType.APPLICATION_JSON));
 
         Batch batch1 = batchRepository.findById(1L).orElse(null);
         Batch batch2 = batchRepository.findById(2L).orElse(null);

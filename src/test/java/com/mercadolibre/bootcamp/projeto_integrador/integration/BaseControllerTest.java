@@ -64,13 +64,6 @@ public class BaseControllerTest {
         return batchRequest;
     }
 
-    protected InboundOrder getSavedInboundOrder(Section section) {
-        InboundOrder inboundOrder = new InboundOrder();
-        inboundOrder.setOrderDate(LocalDate.now());
-        inboundOrder.setSection(section);
-        return inboundOrderRepository.save(inboundOrder);
-    }
-
     protected BatchRequestDto getValidBatchRequest(Product product) {
         BatchRequestDto batchRequest = BatchGenerator.newBatchRequestDTO();
         batchRequest.setProductId(product.getProductId());
@@ -130,6 +123,13 @@ public class BaseControllerTest {
         Manager manager = ManagerGenerator.newManager();
         managerRepository.save(manager);
         return manager;
+    }
+
+    protected InboundOrder getSavedInboundOrder(Section section) {
+        InboundOrder inboundOrder = new InboundOrder();
+        inboundOrder.setOrderDate(LocalDate.now());
+        inboundOrder.setSection(section);
+        return inboundOrderRepository.save(inboundOrder);
     }
 
     protected Batch getSavedBatch(Product product, InboundOrder order) {

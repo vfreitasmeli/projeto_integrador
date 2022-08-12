@@ -8,9 +8,9 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class InboundOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
