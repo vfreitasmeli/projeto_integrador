@@ -188,24 +188,6 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
     }
 
     @Test
-    void updateInboundOrder_returnsForbidden_whenSectionIsFromAnotherManager() throws Exception {
-        Section newSection = getSavedFreshSection(warehouse, forbiddenManager);
-        InboundOrderRequestDto requestDto = getValidInboundOrderRequestDto(newSection, batchOfFreshRequestDto);
-        int quantityBatch = batchRepository.findAll().size();
-
-        mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
-                .param("orderNumber", "" + orderNumber)
-                .content(asJsonString(requestDto))
-                .header("Manager-Id", manager.getManagerId())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
-
-        assertThat(inboundOrderRepository.findById(orderNumber).get().getSection().getSectionCode())
-                .isEqualTo(savedFreshInboundOrder.getSection().getSectionCode());
-        assertThat(batchRepository.findAll().size()).isEqualTo(quantityBatch);
-    }
-
-    @Test
     void updateInboundOrder_returnsBadRequest_whenBatchIsFromAnotherManager() throws Exception {
         // Save batch by another manager
         Section freshSectionFromAnotherManager = getSavedFreshSection(warehouse, forbiddenManager);
@@ -281,5 +263,18 @@ public class UpdateInboundOrderTest extends BaseControllerTest {
                         .header("Manager-Id", manager.getManagerId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateInboundOrder_returnsBadRequest_whenIsGivenProductThatDoesNotExists() throws Exception {
+        BatchRequestDto batchWithNonExistentProduct = getBatchRequest(999);
+
+        mockMvc.perform(put("/api/v1/fresh-products/inboundorder")
+                        .param("orderNumber", String.valueOf(1L))
+                        .content(asJsonString(getValidInboundOrderRequestDto(freshSection, batchWithNonExistentProduct)))
+                        .header("Manager-Id", manager.getManagerId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("There is no product with the specified id"));
     }
 }

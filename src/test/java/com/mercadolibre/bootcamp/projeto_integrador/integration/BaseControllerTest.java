@@ -76,6 +76,12 @@ public class BaseControllerTest {
         return batchRepository.save(batch);
     }
 
+    protected BatchRequestDto getBatchRequest(long productId) {
+        BatchRequestDto batchRequest = BatchGenerator.newBatchRequestDTO();
+        batchRequest.setProductId(productId);
+        return batchRequest;
+    }
+
     protected Warehouse getSavedWarehouse() {
         Warehouse warehouse = WarehouseGenerator.newWarehouse();
         warehouseRepository.save(warehouse);

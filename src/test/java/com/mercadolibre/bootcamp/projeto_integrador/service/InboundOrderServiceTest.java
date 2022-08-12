@@ -3,7 +3,6 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.InboundOrderResponseDto;
-import com.mercadolibre.bootcamp.projeto_integrador.integration.BaseControllerTest;
 import com.mercadolibre.bootcamp.projeto_integrador.model.*;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.*;
 import com.mercadolibre.bootcamp.projeto_integrador.util.*;
@@ -56,7 +55,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenSectionNoExist() {
+    void create_returnsException_whenSectionNoExist() {
         // Arrange
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
                 .thenReturn(Optional.empty());
@@ -73,7 +72,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenSectionHasNoSpace() {
+    void create_returnsException_whenSectionHasNoSpace() {
         // Arrange
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
                 .thenReturn(Optional.of(SectionGenerator.getCrowdedFreshSection()));
@@ -92,7 +91,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenProductNoExist() {
+    void create_returnsException_whenProductNoExist() {
         // Arrange
         inboundOrderRequest.getBatchStock().get(0).setProductId(99);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
@@ -113,7 +112,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenManagerInvalid() {
+    void create_returnsException_whenManagerInvalid() {
         // Arrange
         long managerIdInvalid = 99l;
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
@@ -133,7 +132,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenManagerNotHavePermission() {
+    void create_returnsException_whenManagerNotHavePermission() {
         // Arrange
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
                 .thenReturn(Optional.of(SectionGenerator.getFreshSection(WarehouseGenerator.newWarehouse(),
@@ -157,7 +156,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnException_whenProductCategoryNotCompatibleWithSection() {
+    void create_returnsException_whenProductCategoryNotCompatibleWithSection() {
         // Arrange
         inboundOrderRequest.getBatchStock().get(0).setProductId(2);
         when(sectionRepository.findById(inboundOrderRequest.getSectionCode()))
@@ -179,7 +178,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnBatches_whenSectionHasExactSpaceAvailable() {
+    void create_returnsBatches_whenSectionHasExactSpaceAvailable() {
         // Arrange
         Product productFresh = ProductsGenerator.newProductFresh();
         productFresh.setProductId(1);
@@ -215,7 +214,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void create_returnBatches_whenSectionHasMoreSpaceAvailable() {
+    void create_returnsBatches_whenSectionHasMoreSpaceAvailable() {
         // Arrange
         inboundOrderRequest.setBatchStock(BatchGenerator.newList2BatchRequestsDTO());
         List<Product> products = new ArrayList<>();
@@ -258,7 +257,7 @@ class InboundOrderServiceTest {
 
 
     @Test
-    void update_returnException_whenInboundOrderNoExist() {
+    void update_returnsException_whenInboundOrderNoExist() {
         // Arrange
         when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Optional.empty());
@@ -271,11 +270,12 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no inbound order with the specified id");
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
+        verify(batchService, never())
+                .updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap());
     }
 
     @Test
-    void update_returnException_whenManagerInvalid() {
+    void update_returnsException_whenManagerInvalid() {
         // Arrange
         long managerIdInvalid = 99l;
         when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
@@ -291,11 +291,12 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("Manager with id " + managerIdInvalid + " not found");
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
+        verify(batchService, never())
+                .updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap());
     }
 
     @Test
-    void update_returnException_whenManagerNotHaveOrderPermission() {
+    void update_returnsException_whenManagerNotHaveOrderPermission() {
         // Arrange
         long firstManagerId = 1l;
         InboundOrder savedInboundOrderByFirstManager = InboundOrderGenerator.newFreshInboundOrder();
@@ -319,21 +320,12 @@ class InboundOrderServiceTest {
         // Assert
         assertThat(exception.getMessage()).contains("is not authorized to perform this action.");
         assertThat(exception.getMessage()).contains(unauthorizedManager.getName());
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
+        verify(batchService, never())
+                .updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap());
     }
 
     @Test
-    void update_returnException_whenManagerNotHaveSectionPermission() {
-        assertThat("TO DO").isEqualTo("DONE"); // TODO regra da section foi implementada? Se sim, fazer teste
-    }
-
-    @Test
-    void update_returnException_whenBatchNotBelongToInboundOrder() {
-        assertThat("TO DO").isEqualTo("DONE"); // TODO regra do batch foi implementada? Se sim, fazer teste
-    }
-
-    @Test
-    void update_returnException_whenSectionHasNoSpaceToAdd() {
+    void update_returnsException_whenSectionHasNoSpaceToAdd() {
         // Arrange
         InboundOrder inboundOrder = InboundOrderGenerator.newFreshInboundOrder();
         inboundOrder.getSection().setCurrentBatches(inboundOrder.getSection().getMaxBatches());
@@ -350,33 +342,12 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("Section does not have enough space");
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
+        verify(batchService, never())
+                .updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap());
     }
 
     @Test
-    void update_returnException_whenProductNoExist() {
-        // Arrange
-        inboundOrderRequest.getBatchStock().get(0).setProductId(99l);
-        when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
-                .thenReturn(Optional.of(InboundOrderGenerator.newFreshInboundOrder()));
-        when(managerRepository.findById(ArgumentMatchers.anyLong()))
-                .thenReturn(Optional.of(ManagerGenerator.getManagerWithId()));
-        when(productRepository.findAllById(ArgumentMatchers.anyList()))
-                .thenReturn(null);
-
-        // Act
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> inboundService.update(orderNumber, inboundOrderRequest, managerId)
-        );
-
-        // Assert
-        assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
-    }
-
-    @Test
-    void update_returnException_whenProductCategoryNotCompatibleWithSection() {
+    void update_returnsException_whenProductCategoryNotCompatibleWithSection() {
         // Arrange
         inboundOrderRequest.getBatchStock().get(0).setProductId(2);
         when(inboundOrderRepository.findById(ArgumentMatchers.anyLong()))
@@ -394,11 +365,12 @@ class InboundOrderServiceTest {
 
         // Assert
         assertThat(exception.getMessage()).contains("The following products have incompatible category with the section:");
-        verify(batchService, never()).update(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.any(Batch.class));
+        verify(batchService, never())
+                .updateAll(ArgumentMatchers.any(InboundOrder.class), ArgumentMatchers.anyList(), ArgumentMatchers.anyMap());
     }
 
     @Test
-    void update_returnBatches_whenSectionHasExactSpaceAvailableToAddBatches() {
+    void update_returnsBatches_whenSectionHasExactSpaceAvailableToAddBatches() {
         // Arrange
         Product productFreshWithId = ProductsGenerator.newProductFresh();
         productFreshWithId.setProductId(1l);
@@ -436,7 +408,7 @@ class InboundOrderServiceTest {
     }
 
     @Test
-    void update_returnCreated_whenUpdatingBatchInSectionThatHasNoMoreSpace() {
+    void update_returnsBatches_whenUpdatingBatchInSectionThatHasNoMoreSpace() {
         // Arrange
         inboundOrderRequest.getBatchStock().get(0).setBatchNumber(1l);
         Product productFresh = ProductsGenerator.newProductFresh();
