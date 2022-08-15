@@ -14,6 +14,12 @@ public class WarehouseGenerator {
         return warehouse;
     }
 
+    public static Warehouse newWarehouseWithoutCode() {
+        Warehouse warehouse = new Warehouse();
+        warehouse.setLocation("New York");
+        return warehouse;
+    }
+
     public static WarehouseResponseDto newWarehouseResponseDto() {
         WarehouseResponseDto warehouse = new WarehouseResponseDto(1, 50);
         return warehouse;
