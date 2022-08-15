@@ -1,12 +1,14 @@
 package com.mercadolibre.bootcamp.projeto_integrador.service;
 
+import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductResponseDto;
+import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Manager;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
+import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductDetailsResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.BadRequestException;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.EmptyStockException;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
-import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.util.BatchGenerator;
 import com.mercadolibre.bootcamp.projeto_integrador.util.ManagerGenerator;
@@ -18,7 +20,6 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -31,26 +32,73 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
-
     @InjectMocks
-    private ProductService productService;
-
-    @Mock
-    private IProductRepository productRepository;
-
+    private ProductService service;
     @Mock
     private IBatchRepository batchRepository;
-
+    @Mock
+    private IProductRepository productRepository;
     @Mock
     private IManagerService managerService;
 
     private Product product;
     private List<Batch> batches;
+    private Manager manager;
 
     @BeforeEach
-    void setup() {
+    private void setup() {
         product = ProductsGenerator.newProductFresh();
         batches = BatchGenerator.newBatchList();
+        manager = batches.get(0).getInboundOrder().getSection().getManager();
+    }
+
+    @Test
+    void getWarehouses_returnProduct_whenProductsExists() {
+        // Arrange
+        when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
+        when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
+        when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(manager);
+
+        // Act
+        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId(), manager.getManagerId());
+
+        // Assert
+        assertEquals(foundProduct.getProductId(), product.getProductId());
+        assertEquals(foundProduct.getWarehouses().get(0).getTotalQuantity(), 50);
+        assertEquals(foundProduct.getWarehouses().get(0).getWarehouseCode(), 1);
+        assertEquals(foundProduct.getWarehouses().get(1).getTotalQuantity(), 40);
+        assertEquals(foundProduct.getWarehouses().get(1).getWarehouseCode(), 2);
+    }
+
+    @Test
+    void getWarehouses_returnNotFoundException_whenProductNotExist() {
+        // Arrange
+        when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.empty());
+        when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(manager);
+
+        // Act
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> service.getWarehouses(product.getProductId(), manager.getManagerId()));
+
+        // Assert
+        assertThat(exception.getName()).contains("Product");
+        assertThat(exception.getMessage()).contains("There is no product with the specified id");
+    }
+
+    @Test
+    void getWarehouses_returnProductWithoutWarehouse_whenProductWithoutBatches() {
+        // Arrange
+        when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
+        batches.clear();
+        when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
+        when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(manager);
+
+        // Act
+        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId(), manager.getManagerId());
+
+        // Assert
+        assertEquals(foundProduct.getProductId(), product.getProductId());
+        assertThat(foundProduct.getWarehouses()).isEmpty();
     }
 
     @Test
@@ -61,7 +109,7 @@ class ProductServiceTest {
         when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(ManagerGenerator.getManagerWithId(2));
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, null);
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, null);
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -80,7 +128,7 @@ class ProductServiceTest {
 
         // Act
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> productService.getProductDetails(product.getProductId(), 2, null));
+                () -> service.getProductDetails(product.getProductId(), 2, null));
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
@@ -96,7 +144,7 @@ class ProductServiceTest {
 
         // Act
         EmptyStockException exception = assertThrows(EmptyStockException.class,
-                () -> productService.getProductDetails(product.getProductId(), 1, null));
+                () -> service.getProductDetails(product.getProductId(), 1, null));
 
         // Assert
         assertThat(exception.getMessage()).contains("doesn't have stock");
@@ -118,7 +166,7 @@ class ProductServiceTest {
                 .get().getBatchNumber();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "l");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "l");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -143,7 +191,7 @@ class ProductServiceTest {
                 .get().getCurrentQuantity();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "q");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "q");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -168,7 +216,7 @@ class ProductServiceTest {
                 .get().getDueDate();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "v");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "v");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -181,13 +229,13 @@ class ProductServiceTest {
     @Test
     void getProductDetails_returnBadRequestException_whenInvalidOrderParameter() {
         // Arrange
+        when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(manager);
         when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
         when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
-        when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(ManagerGenerator.getManagerWithId(2));
 
         // Act
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> productService.getProductDetails(product.getProductId(), 2, "AB"));
+                () -> service.getProductDetails(product.getProductId(), manager.getManagerId(), "AB"));
 
         // Assert
         assertThat(exception.getMessage()).contains("Parâmetro de ordenação inválido");
