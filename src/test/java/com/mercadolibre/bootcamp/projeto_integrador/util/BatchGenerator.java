@@ -116,6 +116,7 @@ public class BatchGenerator {
                 .build());
         batches.get(2).getInboundOrder().getSection().setSectionCode(2);
         batches.get(2).getInboundOrder().getSection().getManager().setManagerId(2);
+        batches.get(2).getInboundOrder().getSection().getWarehouse().setWarehouseCode(2);
         return batches;
     }
 

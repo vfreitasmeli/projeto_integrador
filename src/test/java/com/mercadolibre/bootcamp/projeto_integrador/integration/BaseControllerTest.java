@@ -76,6 +76,12 @@ public class BaseControllerTest {
         return warehouse;
     }
 
+    protected Warehouse getSavedWarehouseWithoutCode() {
+        Warehouse warehouse = WarehouseGenerator.newWarehouseWithoutCode();
+        warehouseRepository.save(warehouse);
+        return warehouse;
+    }
+
     protected Product getSavedProduct() {
         return getSavedProduct(Section.Category.FRESH);
     }
