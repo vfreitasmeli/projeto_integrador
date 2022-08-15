@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class PurchaseOrderService implements IPurchaseOrderService {
@@ -93,7 +92,7 @@ public class PurchaseOrderService implements IPurchaseOrderService {
     @Override
     public List<BatchBuyerResponseDto> getBatches(long buyerId, long purchaseOrderId) {
         Buyer buyer = findBuyer(buyerId);
-        PurchaseOrder purchaseOrder = purchaseOrderRepository.findByPurchaseIdAndBuyer(purchaseOrderId, buyer);
+        PurchaseOrder purchaseOrder = purchaseOrderRepository.findOneByPurchaseIdAndBuyer(purchaseOrderId, buyer);
         if(purchaseOrder == null) {
             throw new NotFoundException("Purchase");
         }
