@@ -9,9 +9,6 @@ import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductDetailsResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.BadRequestException;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.EmptyStockException;
-import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
-import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.util.BatchGenerator;
 import com.mercadolibre.bootcamp.projeto_integrador.util.ManagerGenerator;
@@ -28,10 +25,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,8 +38,6 @@ class ProductServiceTest {
     private IBatchRepository batchRepository;
     @Mock
     private IProductRepository productRepository;
-    @Mock
-    private IProductService productService;
     @Mock
     private IManagerService managerService;
 
@@ -118,7 +109,7 @@ class ProductServiceTest {
         when(managerService.findById(ArgumentMatchers.anyLong())).thenReturn(ManagerGenerator.getManagerWithId(2));
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, null);
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, null);
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -137,7 +128,7 @@ class ProductServiceTest {
 
         // Act
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> productService.getProductDetails(product.getProductId(), 2, null));
+                () -> service.getProductDetails(product.getProductId(), 2, null));
 
         // Assert
         assertThat(exception.getMessage()).isEqualTo("There is no product with the specified id");
@@ -153,7 +144,7 @@ class ProductServiceTest {
 
         // Act
         EmptyStockException exception = assertThrows(EmptyStockException.class,
-                () -> productService.getProductDetails(product.getProductId(), 1, null));
+                () -> service.getProductDetails(product.getProductId(), 1, null));
 
         // Assert
         assertThat(exception.getMessage()).contains("doesn't have stock");
@@ -175,7 +166,7 @@ class ProductServiceTest {
                 .get().getBatchNumber();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "l");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "l");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -200,7 +191,7 @@ class ProductServiceTest {
                 .get().getCurrentQuantity();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "q");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "q");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -225,7 +216,7 @@ class ProductServiceTest {
                 .get().getDueDate();
 
         // Act
-        ProductDetailsResponseDto foundProduct = productService.getProductDetails(product.getProductId(), 2, "v");
+        ProductDetailsResponseDto foundProduct = service.getProductDetails(product.getProductId(), 2, "v");
 
         // Assert
         assertThat(foundProduct.getProductId()).isNotNull();
@@ -244,7 +235,7 @@ class ProductServiceTest {
 
         // Act
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> productService.getProductDetails(product.getProductId(), manager.getManagerId(), "AB"));
+                () -> service.getProductDetails(product.getProductId(), manager.getManagerId(), "AB"));
 
         // Assert
         assertThat(exception.getMessage()).contains("Parâmetro de ordenação inválido");
