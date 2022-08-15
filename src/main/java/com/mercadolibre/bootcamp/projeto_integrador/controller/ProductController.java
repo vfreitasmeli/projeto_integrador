@@ -15,7 +15,8 @@ public class ProductController {
     private IProductService service;
 
     @GetMapping("/fresh-products/warehouse")
-    public ResponseEntity<ProductResponseDto> getWarehouses(@RequestParam long productId) {
-        return ResponseEntity.ok(service.getWarehouses(productId));
+    public ResponseEntity<ProductResponseDto> getWarehouses(@RequestParam long productId,
+                                                            @RequestHeader("Manager-Id") long managerId) {
+        return ResponseEntity.ok(service.getWarehouses(productId, managerId));
     }
 }

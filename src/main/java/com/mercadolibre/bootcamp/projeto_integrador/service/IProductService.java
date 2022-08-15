@@ -4,5 +4,5 @@ import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductResponseDto;
 
 public interface IProductService {
 
-    public ProductResponseDto getWarehouses(long productId);
+    public ProductResponseDto getWarehouses(long productId, long managerId);
 }

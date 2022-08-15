@@ -3,10 +3,13 @@ package com.mercadolibre.bootcamp.projeto_integrador.service;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.ProductResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.exceptions.NotFoundException;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Batch;
+import com.mercadolibre.bootcamp.projeto_integrador.model.Manager;
 import com.mercadolibre.bootcamp.projeto_integrador.model.Product;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IBatchRepository;
+import com.mercadolibre.bootcamp.projeto_integrador.repository.IManagerRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.repository.IProductRepository;
 import com.mercadolibre.bootcamp.projeto_integrador.util.BatchGenerator;
+import com.mercadolibre.bootcamp.projeto_integrador.util.ManagerGenerator;
 import com.mercadolibre.bootcamp.projeto_integrador.util.ProductsGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,14 +35,18 @@ class ProductServiceTest {
     private IBatchRepository batchRepository;
     @Mock
     private IProductRepository productRepository;
+    @Mock
+    private IManagerRepository managerRepository;
 
     private Product product;
     private List<Batch> batches;
+    private Manager manager;
 
     @BeforeEach
     private void setup() {
         product = ProductsGenerator.newProductFresh();
         batches = BatchGenerator.newBatchList();
+        manager = batches.get(0).getInboundOrder().getSection().getManager();
     }
 
     @Test
@@ -47,9 +54,10 @@ class ProductServiceTest {
         // Arrange
         when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
         when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
+        when(managerRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(manager));
 
         // Act
-        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId());
+        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId(), manager.getManagerId());
 
         // Assert
         assertEquals(foundProduct.getProductId(), product.getProductId());
@@ -63,10 +71,11 @@ class ProductServiceTest {
     void getWarehouses_returnNotFoundException_whenProductNotExist() {
         // Arrange
         when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.empty());
+        when(managerRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(manager));
 
         // Act
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> service.getWarehouses(product.getProductId()));
+                () -> service.getWarehouses(product.getProductId(), manager.getManagerId()));
 
         // Assert
         assertThat(exception.getName()).contains("Product");
@@ -79,9 +88,10 @@ class ProductServiceTest {
         when(productRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(product));
         batches.clear();
         when(batchRepository.findAllByProduct(ArgumentMatchers.any())).thenReturn(batches);
+        when(managerRepository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(manager));
 
         // Act
-        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId());
+        ProductResponseDto foundProduct = service.getWarehouses(product.getProductId(), manager.getManagerId());
 
         // Assert
         assertEquals(foundProduct.getProductId(), product.getProductId());
