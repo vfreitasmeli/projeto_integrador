@@ -70,6 +70,18 @@ public class BaseControllerTest {
         return batchRequest;
     }
 
+    protected Batch getSavedBatch(BatchRequestDto batchRequest, InboundOrder inboundOrder) {
+        Batch batch = BatchGenerator.mapBatchRequestDtoToBatch(batchRequest);
+        batch.setInboundOrder(inboundOrder);
+        return batchRepository.save(batch);
+    }
+
+    protected BatchRequestDto getBatchRequest(long productId) {
+        BatchRequestDto batchRequest = BatchGenerator.newBatchRequestDTO();
+        batchRequest.setProductId(productId);
+        return batchRequest;
+    }
+
     protected Warehouse getSavedWarehouse() {
         Warehouse warehouse = WarehouseGenerator.newWarehouse();
         warehouseRepository.save(warehouse);
@@ -82,7 +94,7 @@ public class BaseControllerTest {
         return warehouse;
     }
 
-    protected Product getSavedProduct() {
+    protected Product getSavedFreshProduct() {
         return getSavedProduct(Section.Category.FRESH);
     }
 
@@ -93,19 +105,19 @@ public class BaseControllerTest {
         return product;
     }
 
-    protected Section getSavedSection(Warehouse warehouse, Manager manager) {
-        return getSavedSection(warehouse, manager, 10);
+    protected Section getSavedFreshSection(Warehouse warehouse, Manager manager) {
+        return getSavedFreshSection(warehouse, manager, 5);
     }
 
-    protected Section getSavedSection(Warehouse warehouse, Manager manager, int maxBatches) {
-        Section section = SectionGenerator.getSection(warehouse, manager);
+    protected Section getSavedFreshSection(Warehouse warehouse, Manager manager, int maxBatches) {
+        Section section = SectionGenerator.getFreshSection(warehouse, manager);
         section.setMaxBatches(maxBatches);
         sectionRepository.save(section);
         return section;
     }
 
     protected Section getSavedSection(Warehouse warehouse, Manager manager, Section.Category category) {
-        Section section = SectionGenerator.getSection(warehouse, manager);
+        Section section = SectionGenerator.getFreshSection(warehouse, manager);
         section.setCategory(category);
         sectionRepository.save(section);
         return section;
@@ -118,11 +130,10 @@ public class BaseControllerTest {
     }
 
     protected InboundOrder getSavedInboundOrder(Section section) {
-        InboundOrder order = new InboundOrder();
-        order.setOrderDate(LocalDate.now());
-        order.setSection(section);
-        inboundOrderRepository.save(order);
-        return order;
+        InboundOrder inboundOrder = new InboundOrder();
+        inboundOrder.setOrderDate(LocalDate.now());
+        inboundOrder.setSection(section);
+        return inboundOrderRepository.save(inboundOrder);
     }
 
     protected Batch getSavedBatch(Product product, InboundOrder order) {

@@ -33,19 +33,19 @@ class ProductGetWarehousesTest extends BaseControllerTest {
     @BeforeEach
     public void setup() {
         manager = getSavedManager();
-        product1 = getSavedProduct();
-        product2 = getSavedProduct();
+        product1 = getSavedProduct(Section.Category.FRESH);
+        product2 = getSavedProduct(Section.Category.FRESH);
 
         Warehouse warehouse = getSavedWarehouseWithoutCode();
-        Section section = getSavedSection(warehouse, manager);
+        Section section = getSavedSection(warehouse, manager, product1.getCategory());
         validInboundOrderRequestSection1 = getValidInboundOrderRequestDtoWithBatchList(section, getValidListBatchRequest(product1));
 
         warehouse = getSavedWarehouseWithoutCode();
-        section = getSavedSection(warehouse, manager);
+        section = getSavedSection(warehouse, manager, product1.getCategory());
         validInboundOrderRequestSection2 = getValidInboundOrderRequestDtoWithBatchList(section, getValidListBatchRequest(product1));
 
         warehouse = getSavedWarehouseWithoutCode();
-        section = getSavedSection(warehouse, manager);
+        section = getSavedSection(warehouse, manager, product1.getCategory());
         validInboundOrderRequestSection3 = getValidInboundOrderRequestDtoWithBatchList(section, getValidListBatchRequest(product1));
 
         service.create(validInboundOrderRequestSection1, manager.getManagerId());
