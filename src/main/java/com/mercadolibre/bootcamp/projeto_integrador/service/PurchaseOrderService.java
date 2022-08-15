@@ -1,5 +1,6 @@
 package com.mercadolibre.bootcamp.projeto_integrador.service;
 
+import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchBuyerResponseDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.BatchPurchaseOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.PurchaseOrderRequestDto;
 import com.mercadolibre.bootcamp.projeto_integrador.dto.PurchaseOrderResponseDto;
@@ -79,6 +80,24 @@ public class PurchaseOrderService implements IPurchaseOrderService {
     @Override
     public void dropProducts(long purchaseOrderId, BatchPurchaseOrderRequestDto batchDto, long buyerId) {
         batchPurchaseOrderRepository.delete(returnToStock(findBatchPurchaseOrder(findPurchaseOrder(purchaseOrderId, buyerId), findBatchById(batchDto.getBatchNumber()))));
+    }
+
+    /**
+     * Método que busca a lista de compras do carrinho (PurchaseOrder) do cliente.
+     * @param buyerId long.
+     * @param purchaseOrderId long.
+     * @return PurchaseOrder.
+     * @throws NotFoundException if not exist opened Purchase
+     */
+    @Transactional
+    @Override
+    public List<BatchBuyerResponseDto> getBatches(long buyerId, long purchaseOrderId) {
+        Buyer buyer = findBuyer(buyerId);
+        PurchaseOrder purchaseOrder = purchaseOrderRepository.findByPurchaseIdAndBuyer(purchaseOrderId, buyer);
+        if(purchaseOrder == null) {
+            throw new NotFoundException("Purchase");
+        }
+        return mapListBatchPurchaseToListDto(purchaseOrder.getBatchPurchaseOrders());
     }
 
     /**
@@ -213,5 +232,12 @@ public class PurchaseOrderService implements IPurchaseOrderService {
         Optional<BatchPurchaseOrder> foundBatchPurchaseOrder = batchPurchaseOrderRepository.findOneByPurchaseOrderAndBatch(purchase, batch);
         if (foundBatchPurchaseOrder.isEmpty()) throw new NotFoundException("Batch PurchaseOrder");
         return foundBatchPurchaseOrder.get();
+    }
+
+    private List<BatchBuyerResponseDto> mapListBatchPurchaseToListDto(List<BatchPurchaseOrder> batches) {
+        List<BatchBuyerResponseDto> batchBuyerResponse = batches.stream()
+                .map(batch -> new BatchBuyerResponseDto(batch))
+                .collect(Collectors.toList());
+        return batchBuyerResponse;
     }
 }
