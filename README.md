@@ -1,161 +1,77 @@
-# Projeto_Integrador
-API REST desenvolvida pelo grupo Beta Campers para o Projeto Integrador feito durante o IT Bootcamp Backend Java (wave 6). 
+# Projeto_Integrador(Requisito 6) Pessoal
+API REST desenvolvida pelo grupo Beta Campers para o Projeto Integrador feito durante o IT Bootcamp Backend Java (wave 6). Solução individual para criação de dashboards. 
 
 ## Autores
 <a href="https://github.com/vfreitasmeli">
   <img src="https://avatars.githubusercontent.com/u/107959338?s=50&v=4" style="width: 50px">
-</a>
-<a href="https://github.com/brunavottri">
-  <img src="https://avatars.githubusercontent.com/u/108009877?s=120&v=4" style="width: 50px">
-</a>
-<a href="https://github.com/pealmeida-meli">
-  <img src="https://avatars.githubusercontent.com/u/108008922?s=120&v=4" style="width: 50px">
-</a>
-<a href="https://github.com/thiagosordiMELI">
-  <img src="https://avatars.githubusercontent.com/u/108008559?s=120&v=4" style="width: 50px">
-</a>
-<a href="https://github.com/bdonadel">
-  <img src="https://avatars.githubusercontent.com/u/108012641?s=120&v=4" style="width: 50px">
-</a>
-<a href="https://github.com/felipeticiani-meli">
-  <img src="https://avatars.githubusercontent.com/u/108010964?s=120&v=4" style="width: 50px">
 </a>
 
 # Sumário
 
 - [Observações](#observações)
 - [Funcionalidades](#funcionalidades)
-- <a href="https://app.diagrams.net/#G1X_05jbEF7Yt2yFOZ2y3OfKW_KCPjm5MC">Diagrama UML </a>
-- [Inbound Order](#inboundOrder)
-  - [Post - Cria uma nova entrada do pedido](#createInboundOrder)
-  - [Put - Atualiza entrada do pedido](#putInboundOrder)
+- Criação de dashboard para a área de de armazém (warehouse), utilizando Logstash como pipeline para capturar os dados vindos da API, salvando-os em document no ElasticSearch e transformando os dados através do Kibana para dashboard com melhor visualização. 
 
 # Funcionalidades
 
-## Inbound Order <br name="inboundOrder">
+## Logstash: configuração 
 
-`POST /api/v1/fresh-products/inboundorder` <br name="createInboundOrder">
-Cria uma nova entrada do pedido.
-<pre><code><b>Payload Example:</b>
-{
-  "sectionCode": 1,
-  "batchStock": [
-          {
-            "productId": 1,
-            "currentTemperature":20,
-            "minimumTemperature": 15,
-            "initialQuantity": 10,
-            "currentQuantity": 7,
-            "manufacturingDate": "2021-12-31",
-            "manufacturingTime": "2021-12-31T00:00:00",
-            "dueDate": "2022-12-31"
-            "productPrice": 22.50
-         },
-          {
-            "productId": 2,
-            "currentTemperature":19,
-            "minimumTemperature": 16,
-            "initialQuantity": 20,
-            "currentQuantity": 13,
-            "manufacturingDate": "2022-06-16",
-            "manufacturingTime": "2022-06-16T22:16:23",
-            "dueDate": "2022-07-01",
-            "productPrice": 7.90
-         },
-   ]
- }
- 
- <b>Response:</b>
-  "batchStock": [
-          {
-            "productId": 1,
-            "currentTemperature":20,
-            "minimumTemperature": 15,
-            "initialQuantity": 10,
-            "currentQuantity": 7,
-            "manufacturingDate": "2021-12-31",
-            "manufacturingTime": "2021-12-31 00:00:00",
-            "dueDate": "2022-12-31"
-            "productPrice": 22.50
-         },
-          {
-            "productId": 2,
-            "currentTemperature":19,
-            "minimumTemperature": 16,
-            "initialQuantity": 20,
-            "currentQuantity": 13,
-            "manufacturingDate": "2022-06-16",
-            "manufacturingTime": "2022-06-16 22:16:23",
-            "dueDate": "2022-07-01",
-            "productPrice": 7.90
-         },
-   ]
- 
+- Instalação do Logstash e configuração do arquivo logstash.conf.
+<pre><code><b>logstash.conf exemplo:</b>
+input {
+
+   jdbc {
+    jdbc_driver_library => "<path>/mysql-connector-java-8.0.30/mysql-connector-java-8.0.30.jar"
+    jdbc_driver_class => "com.mysql.jdbc.Driver"
+    jdbc_connection_string => "jdbc:mysql://localhost:3306/<dbase>"
+    jdbc_user => root
+    jdbc_password => ""
+    jdbc_paging_enabled => true
+    tracking_column => "batch_number"
+    use_column_value => true
+    schedule => "* * * * *"
+    statement => <mysql query to filter data>
+	}
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "pi_logstash_analytics_warehouse"
+  }
+ stdout { codec => rubydebug }
+	
+}
  </code></pre>
  
- `PUT /api/v1/fresh-products/inboundorder` <br name="putInboundOrder">
-Atualiza entrada do pedido.
-<pre><code><b>Payload Example:</b>
+ - Com os dados filtrados e index criado no ElasticSearch:
+ 
+ `GET pi_logstash_analytics_warehouse/_doc/JV1Ep4IBjXuA3Mn2zWQZ`
+Mostra a resposta de um dos nós do index.
+<pre><code><b>Response:</b>
 {
-  "sectionCode": 1,
-  "batchStock": [
-          {
-            "productId": 1,
-            "currentTemperature":20,
-            "minimumTemperature": 15,
-            "initialQuantity": 10,
-            "currentQuantity": 7,
-            "manufacturingDate": "2021-12-31",
-            "manufacturingTime": "2021-12-31T00:00:00",
-            "dueDate": "2022-12-31"
-            "productPrice": 22.50
-         },
-          {
-            "productId": 2,
-            "currentTemperature":19,
-            "minimumTemperature": 16,
-            "initialQuantity": 20,
-            "currentQuantity": 13,
-            "manufacturingDate": "2022-06-16",
-            "manufacturingTime": "2022-06-16T22:16:23",
-            "dueDate": "2022-07-01",
-            "productPrice": 7.90
-         },
-   ]
- }
- 
- <b>Response:</b>
-  "batchStock": [
-          {
-            "productId": 1,
-            "currentTemperature":20,
-            "minimumTemperature": 15,
-            "initialQuantity": 10,
-            "currentQuantity": 7,
-            "manufacturingDate": "2021-12-31",
-            "manufacturingTime": "2021-12-31 00:00:00",
-            "dueDate": "2022-12-31"
-            "productPrice": 22.50
-         },
-          {
-            "productId": 2,
-            "currentTemperature":19,
-            "minimumTemperature": 16,
-            "initialQuantity": 20,
-            "currentQuantity": 13,
-            "manufacturingDate": "2022-06-16",
-            "manufacturingTime": "2022-06-16 22:16:23",
-            "dueDate": "2022-07-01",
-            "productPrice": 7.90
-         },
-   ]
- 
- </code></pre>
- - Será validado se:<br>
-  - Todos os campos não estão vazios
-  - O código do setor, id do produto, e preço do produto são positivos
-  - Se a lista "batchStock" não está vazia
-  - Se a data de fabricação e a data de vencimento estão no formato dd-MM-yyyy
-  - Se a hora de fabricação está no formato dd-MM-yyyy HH:mm:ss
-  - Se a data e hora de fabricação e a data de vencimento são posteriores a data de criação
-
+  "_index" : "pi_logstash_analytics_warehouse",
+  "_type" : "_doc",
+  "_id" : "JV1Ep4IBjXuA3Mn2zWQZ",
+  "_version" : 1,
+  "_seq_no" : 18,
+  "_primary_term" : 1,
+  "found" : true,
+  "_source" : {
+    "due_date" : "2024-08-20T03:00:00.000Z",
+    "category" : "CHILLED",
+    "@timestamp" : "2022-08-16T15:28:00.160Z",
+    "current_quantity" : 4,
+    "batch_number" : 6,
+    "order_date" : "2022-08-16T03:00:00.000Z",
+    "manufacturing_date" : "2022-07-25T03:00:00.000Z",
+    "product_price" : 10.99,
+    "quantity" : 4,
+    "section_code" : 6,
+    "location" : "Qatar",
+    "product_name" : "Iogurte",
+    "@version" : "1"
+  }
+}
+  </code></pre>
+ - Com as informações obtidas, cria-se o dashboard
